@@ -18,6 +18,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 	// AQI calculation variables
 	private pm25arr = [0, 12, 35.4, 55.4, 150.4, 250.4, 350.4, 500.4]
 	private pm10arr = [0, 54, 154, 254, 354, 424, 504, 604]
+	private aqi = [0, 50, 100, 150, 200, 300, 400, 500]
+
+	public year = moment().year()
 
 	// Chart data
 	private dataPoints: Array<Array<any>> = []
@@ -26,6 +29,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	// Progress/history store
 	public progress: Array<any> = []
+	public showHistory: boolean = true;
 
 	// Active date filter, ='All' if either are null
 	public selected: { start: string, end: string } = { start: null, end: null }
@@ -70,6 +74,32 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.lastMillis = currentMillis
 	}
 
+	registerCustomMarker(set: string, i: number, type: string, color: string) {
+		this.dataPoints[set][i].markerType = type
+		this.dataPoints[set][i].markerColor = color
+	}
+
+	minMaxForSet(sets: string[], valueData: Array<any>) {
+		sets.forEach(set => {
+			this.pushUpdate(`=> '${set}'`)
+			// Iterate values inside datapoint sets
+			let maxSet = false
+			let minSet = false
+			for (let i = this.dataPoints[set].length - 1; i >= 0; i--) {
+				// Single value inside a datapoint set
+				if (this.dataPoints[set][i].y === valueData[set]['max'] && !maxSet) {
+					this.registerCustomMarker(set, i, 'cross', 'pink')
+					maxSet = true
+				}
+				if (this.dataPoints[set][i].y === valueData[set]['min'] && !minSet) {
+					this.registerCustomMarker(set, i, 'cross', 'white')
+					minSet = true
+				}
+				if (maxSet === true && minSet === true) break
+			}
+		})
+	}
+
 	async ngAfterViewInit() {
 		// Run outside Angular's zone to prevent hanging the UI
 		this.zone.runOutsideAngular(() => {
@@ -105,27 +135,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 				// Iterate datapoint sets
 				this.pushUpdate('Calculating minimum and maximum values');
-				sets.forEach(set => {
-					this.pushUpdate(`=> '${set}'`)
-					// Iterate values inside datapoint sets
-					let maxSet = false
-					let minSet = false
-					for (let i = this.dataPoints.length - 1; i >= 0; i--) {
-						// Single value inside a datapoint set
-						// TODO : Re-use or split up marker code
-						if (this.dataPoints[set][i].y === valueData[set]['max']) {
-							this.dataPoints[set][i].markerType = 'cross'
-							this.dataPoints[set][i].markerColor = 'cyan'
-							maxSet = true
-						}
-						if (this.dataPoints[set][i].y === valueData[set]['min']) {
-							this.dataPoints[set][i].markerType = 'cross'
-							this.dataPoints[set][i].markerColor = 'cyan'
-							minSet = true
-						}
-						if (maxSet === true && minSet === true) break
-					}
-				})
+				this.minMaxForSet(sets, valueData);
 
 				this.pushUpdate(`Sorting all data sets`)
 				// Sorts all given data sets (here, all) by date
@@ -165,6 +175,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 				)
 				this.pushUpdate(`Rendering all charts`)
 				this.rendering = false
+				this.showHistory = false
 
 				this.renderChart([], 0, 'pm', 'temp', 'pressure', 'light', 'humi')
 				this.pushUpdate(`Done.`)
@@ -184,7 +195,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.pushUpdate('Resetting filters')
 		this.selected.end = null
 		this.selected.start = null
-		this.resetFilter('temp', 'temperatureLow', 'temperatureHigh')
+		this.resetFilter('temp', 'temperatureHigh', 'temperatureLow')
 		this.resetFilter('pm', 'pm10', 'pm25')
 		this.resetFilter('pressure', 'pressure')
 		this.resetFilter('light', 'lightLevel')
@@ -262,7 +273,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		dataSets.forEach(dataSet => {
 			data.push({
 				markerSize: 8,
-				type: 'line',
+				type: 'splineArea',
 				name: dataSet.label,
 				showInLegend: true,
 				dataPoints: dataSet.data,
@@ -304,10 +315,16 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	calcAQI(input: number, pms: Array<number>) {
-		const aqi = [0, 50, 100, 150, 200, 300, 400, 500]
 		for (let i = 0; i < pms.length; i++)
 			if (input >= pms[i] && input <= pms[i + 1])
-				return ((aqi[i + 1] - aqi[i]) / (pms[i + 1] - pms[i])) * (input - pms[i]) + aqi[i]
+				return ((this.aqi[i + 1] - this.aqi[i]) / (pms[i + 1] - pms[i])) * (input - pms[i]) + this.aqi[i]
+
+		// Alternative method using .forEach
+		// let ret = 0
+		// pms
+		// .filter(it => (input >= it && input <= pms.indexOf(it)+1))
+		// .forEach(it => ret = ((this.aqi[pms.indexOf(it) + 1] - this.aqi[pms.indexOf(it)]) / (pms[pms.indexOf(it) + 1] - pms[pms.indexOf(it)])) * (input - pms[pms.indexOf(it)]) + this.aqi[pms.indexOf(it)])
+		// return ret
 	}
 
 	addMarkers(sensors: Array<any>, value: string, date: string, valueData: any) {

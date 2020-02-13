@@ -1,43 +1,53 @@
-<div [ngClass]="isRendering() ? 'hidden' : null">
-    <p>
-        <span>
-            <b style="margin-right: 25px">Range : {{formatStructs()}}</b>
-            <input type="text" matInput ngxDaterangepickerMd [locale]="{applyLabel: 'Apply', format: 'DD-MM-YYYY'}"
-                startKey="start" endKey="end" [(ngModel)]="selected" (ngModelChange)="applyDateFilter()"
-                name="daterange" class="datepicker" />
-            <button class="reset" (click)="resetAllFilters()">Reset</button>
-        </span>
-    </p>
-    <div class="chart" id="pmChart"></div>
-    <div class="row">
-        <div class="col-6 col-lg-6 col-sm-12">
-            <div class="chart" id="pressChart"></div>
+<div class="wrapper">
+    <div [ngClass]="isRendering() ? 'hidden' : null">
+        <p>
+            <span>
+                <b style="margin-right: 25px">Range : {{formatStructs()}}</b>
+                <input type="text" matInput ngxDaterangepickerMd [locale]="{applyLabel: 'Apply', format: 'DD-MM-YYYY'}"
+                    startKey="start" endKey="end" [(ngModel)]="selected" (ngModelChange)="applyDateFilter()"
+                    name="daterange" class="datepicker" />
+                <button class="reset" (click)="resetAllFilters()">Reset</button> <button class="reset"
+                    (click)="showHistory = true">History</button>
+            </span>
+        </p>
+        <div class="chart" id="pmChart"></div>
+        <div class="row">
+            <div class="col-6 col-lg-6 col-sm-12">
+                <div class="chart" id="pressChart"></div>
+            </div>
+            <div class="col-6 col-lg-6 col-sm-12">
+                <div class="chart" id="tempChart"></div>
+            </div>
         </div>
-        <div class="col-6 col-lg-6 col-sm-12">
-            <div class="chart" id="tempChart"></div>
+        <div class="row">
+            <div class="col-6 col-lg-6 col-sm-12">
+                <div class="chart" id="lightChart"></div>
+            </div>
+            <div class="col-6 col-lg-6 col-sm-12">
+                <div class="chart" id="humChart"></div>
+            </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-6 col-lg-6 col-sm-12">
-            <div class="chart" id="lightChart"></div>
-        </div>
-        <div class="col-6 col-lg-6 col-sm-12">
-            <div class="chart" id="humChart"></div>
-        </div>
-    </div>
-</div>
 
-<script>
-    $(function () {
-        $('input[name="daterange"]').daterangepicker({
-            opens: 'left'
-        }, function (start, end, label) {
-            console.log("A new date selection was made: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+    <script>
+        $(function () {
+            $('input[name="daterange"]').daterangepicker({
+                opens: 'left'
+            }, function (start, end, label) {
+                console.log("A new date selection was made: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
+            });
         });
-    });
-</script>
+    </script>
 
-<div>
-    <h1 class="loader">{{isRendering() ? 'Loading application' : 'History'}}</h1>
-    <b *ngFor="let step of progress"><b><small>{{step.lastTook}}</small></b><br>{{step.new}}</b>
+    <div [ngClass]="showHistory ? 'popup' : 'hidden'" (click)="showHistory = false">
+        <div (click)="showHistory=true">
+            <h1 class="loader">{{isRendering() ? 'Loading application' : 'History'}} <button class="reset history"
+                    (click)="showHistory = false">Hide</button></h1>
+            <b *ngFor="let step of progress"><b><small>{{step.lastTook}}</small></b><br>{{step.new}}</b>
+        </div>
+    </div>
+
+    <div class="footer">
+        <b>&copy; 2019 - {{year}} Guus Lieben</b>
+    </div>
 </div>
