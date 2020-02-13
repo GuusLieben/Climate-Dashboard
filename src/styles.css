@@ -1,1 +1,178 @@
 /* You can add global styles to this file, and also import other style files */
+
+body {
+    background-color: #2A2A2A;
+    font-family: 'Courier New', Courier, monospace;
+    padding: 50px 120px 10px 70px;
+    color: #fff;
+}
+
+.loader {
+    color: white;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.hidden {
+    opacity: 0;
+    overflow-y: hidden;
+    max-height: 100px;
+}
+
+.chart {
+    height: 370px;
+    margin-bottom: 50px;
+    padding-top: 10px;
+    width: 100%;
+}
+
+.card {
+    border-radius: 0px;
+    border: 0;
+    background-color: #2A2A2A;
+}
+
+.card-body .row {
+    padding: 25px;
+}
+
+.btn-light {
+    color: white !important;
+}
+
+.btn-light:hover {
+    background: #222 !important;
+}
+
+.ngb-dp-header, .ngb-dp-weekdays {
+    background: #333 !important;
+}
+
+ngb-datepicker {
+    border: 1px solid black !important;
+}
+
+.md-drppicker, .calendar-table {
+    background-color: #2A2A2A !important;
+    border: 0 !important;
+}
+
+.off {
+    background: #2a2a2a !important;
+}
+
+.md-drppicker td.active, .md-drppicker td.active:hover {
+    background-color: #9BBB58 !important;
+}
+
+.off {
+    background: #3e3e3e;
+    border-radius: 0;
+}
+
+.md-drppicker td.available:hover, .md-drppicker th.available:hover :not(.prev, .next) {
+    background: #C0504E !important;
+}
+
+.md-drppicker .btn, .reset {
+    border-radius: 2em !important;
+    background-color: #9BBB58 !important;
+    text-transform: capitalize !important;
+    min-width: 75px !important;
+    line-height: 28px !important;
+    font-size: 12px !important;
+    position: relative;
+    overflow: hidden;
+    border-width: 0;
+    outline: 0;
+    padding: 0 6px;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,.6);
+    color: #ecf0f1;
+    transition: background-color .4s;
+    height: auto;
+    border: none;
+}
+
+.reset {
+    padding: 4px;
+    margin-left: 10px;
+    line-height: 12px !important;
+    background-color: #C0504E !important;
+}
+
+.reset:hover {
+    background-color: #7a2826 !important;
+}
+
+.datepicker {
+    color: #9BBB58;
+    background: #9BBB58;
+    border: 0;
+    max-width: 16px;
+    max-height: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    border-radius: 2em;
+    margin-left: -20px;
+    -webkit-touch-callout: none;
+    /* iOS Safari */
+    -webkit-user-select: none;
+    /* Safari */
+    -khtml-user-select: none;
+    /* Konqueror HTML */
+    -moz-user-select: none;
+    /* Old versions of Firefox */
+    -ms-user-select: none;
+    /* Internet Explorer/Edge */
+    user-select: none;
+}
+
+.canvasjs-chart-toolbar {
+    border: none !important;
+}
+
+.canvasjs-chart-toolbar button {
+    border: none !important;
+    background-color: #9BBB58 !important;
+    border-radius: 2em !important;
+    max-width: 24px;
+    max-height: 24px;
+    min-height: 24px;
+    margin-left: 10px;
+    padding: 7px 5px !important;
+}
+
+.canvasjs-chart-toolbar div {
+    background: rgba(0,0,0,0)!important;
+    box-shadow: none !important;
+    right: -120px !important;
+    top: -14px !important;
+    z-index: 1000000;
+}
+
+.canvasjs-chart-toolbar div div {
+    padding: 8px !important;
+    background-color: #C0504E !important;
+    margin: 8px !important;
+    font-size: 12px !important;
+    color: rgb(245, 245, 245) !important;
+    border-radius: 2em !important;
+    text-align: center !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,.6);
+}
+
+.canvasjs-chart-toolbar div div:hover {
+    background-color: #7a2826 !important;
+}
+
+.prev, .next {
+    background-color: #3e3e3e !important;
+}
+
+.prev:hover, .next:hover {
+    background-color: #505050 !important;
+}
+
+.canvasjs-chart-credit {
+    display: none !important;
+}

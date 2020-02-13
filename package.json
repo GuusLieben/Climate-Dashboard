@@ -3,11 +3,8 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e"
+    "prod": "ng build --prod && node server.js",
+    "start": "nodemon server.js"
   },
   "private": true,
   "dependencies": {
@@ -16,9 +13,21 @@
     "@angular/compiler": "~9.0.0",
     "@angular/core": "~9.0.0",
     "@angular/forms": "~9.0.0",
+    "@angular/localize": "^9.0.0",
     "@angular/platform-browser": "~9.0.0",
     "@angular/platform-browser-dynamic": "~9.0.0",
     "@angular/router": "~9.0.0",
+    "@ng-bootstrap/ng-bootstrap": "^5.2.2",
+    "angular-2-daterangepicker": "^1.1.52",
+    "chart.js": "^2.9.3",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "moment": "^2.24.0",
+    "mysql": "^2.18.1",
+    "ng-bootstrap": "^1.6.3",
+    "ng2-charts": "^2.2.4",
+    "ngx-daterangepicker-material": "^2.1.11",
+    "nodemon": "^2.0.2",
     "rxjs": "~6.5.4",
     "tslib": "^1.10.0",
     "zone.js": "~0.10.2"
