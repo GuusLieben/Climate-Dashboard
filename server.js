@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql');
 const moment = require('moment');
-const settings = require('settings');
+const settings = require('./settings');
 
 const connection = mysql.createConnection(settings.connectionSettings);
 connection.connect();
