@@ -2,17 +2,17 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql');
 const moment = require('moment');
-const connectionSettings = require('settings');
+const settings = require('settings');
 
-const connection = mysql.createConnection(connectionSettings);
+const connection = mysql.createConnection(settings.connectionSettings);
 connection.connect();
 
 const port = process.env.PORT || 8080;
 const app = express().use(cors());
 
 app.get('/api', (req, res) => {
-  connection.query('SELECT \'Temperature\' AS TypeSet, Datum AS Recorded, Tijd, temp1 AS Measure1, temp2 AS Measure2, press, light, humi FROM temperatures UNION SELECT \'Particle\' AS TypeSet, recorded AS Recorded, 0, pm25 AS Measure1, pm10 AS Measure2, 0, 0, 0 FROM particles', (error, results) => {
-    if (error) res.status(500).json({ status: error });
+  connection.query(settings.gatherAllQuery, (error, results) => {
+    if (error) res.status(500).json({status: error});
     else {
       let temperatures = [];
       let particles = [];
@@ -27,7 +27,7 @@ app.get('/api', (req, res) => {
         // Particles has combined DateTime stamps, therefore we do not need to parse it with MomentJS
         const date = element.Recorded.split(' ')[0];
         const time = element.Recorded.split(' ')[1];
-        if (!response[date]) response[date] = { particles: [] }
+        if (!response[date]) response[date] = {particles: []}
 
         response[date].particles.push({
           time: time,
@@ -38,7 +38,7 @@ app.get('/api', (req, res) => {
 
       temperatures.forEach(element => {
         const date = moment(element.Recorded, 'YYYY-MM-DD').format('DD.MM.YYYY');
-        if (!response[date]) response[date] = { sensors: [] }
+        if (!response[date]) response[date] = {sensors: []}
         if (!response[date].sensors) response[date].sensors = [];
 
         response[date].sensors.push({
