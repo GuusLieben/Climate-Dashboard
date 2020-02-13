@@ -12,26 +12,28 @@ import { NgbDateStruct, NgbCalendar } from '@ng-bootstrap/ng-bootstrap'
 })
 export class AppComponent implements OnInit, AfterViewInit {
 
+	// HttpClient for API calls, NgZone for out-of-zone activities
+	constructor(private http: HttpClient, private zone: NgZone) { }
+
+	// AQI calculation variables
 	private pm25arr = [0, 12, 35.4, 55.4, 150.4, 250.4, 350.4, 500.4]
 	private pm10arr = [0, 54, 154, 254, 354, 424, 504, 604]
 
+	// Chart data
 	private dataPoints: Array<Array<any>> = []
 	public rendering: boolean = true
-
 	private charts: Array<CanvasJS.Chart> = []
 
-	public isCollapsed = true
-
+	// Progress/history store
 	public progress: Array<any> = []
 
-	getProgress(): string[] {
-		return this.progress;
-	}
-
+	// Active date filter, ='All' if either are null
 	public selected: { start: string, end: string } = { start: null, end: null }
 
-	constructor(private http: HttpClient, private zone: NgZone) { }
+	// lastMillis will display when the previous task was started, to render how long a task took
+	private lastMillis: number;
 
+	// Date Struct is valid if neither are null, and date formats are valid (through MomentJS)
 	structValid(): boolean {
 		const firstStruct = this.selected.start ? moment(this.selected.start, 'YYYY-MM-DDTHH:mm:ss.mmmZ').valueOf() : null
 		const lastStruct = this.selected.end ? moment(this.selected.end, 'YYYY-MM-DDTHH:mm:ss.mmmZ').valueOf() : null
@@ -39,6 +41,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		return firstStruct < lastStruct
 	}
 
+	// To prevent duplicate logic in the plural function for formatting
 	formatStruct(struct: string) {
 		return struct ? moment(struct, 'YYYY-MM-DDTHH:mm:ss.mmmZ').format('DD MMM YYYY') : null
 	}
@@ -49,16 +52,17 @@ export class AppComponent implements OnInit, AfterViewInit {
 		return (fStr && lStr) ? fStr + ' - ' + lStr : 'All'
 	}
 
+	// Using getter to more quickly hook into Angular activity rendering
 	isRendering(): boolean {
 		return this.rendering
 	}
 
-	private lastMillis: number;
 	pushUpdate(update: string) {
 		const currentMillis = moment().milliseconds()
 		let lastTook = (currentMillis - this.lastMillis)
 		if (lastTook < 0) lastTook = -lastTook;
 
+		// Run the logging inside Angular's zone, to directly push an update even if the update is called from outside Angular's zone
 		this.zone.run(() => this.progress.push({
 			new: update,
 			lastTook: lastTook ? ` . . . took ${lastTook}ms` : ''
@@ -67,11 +71,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	async ngAfterViewInit() {
+		// Run outside Angular's zone to prevent hanging the UI
 		this.zone.runOutsideAngular(() => {
 			this.pushUpdate('Connecting to API')
 			this.http.get('http://localhost:8080/api').subscribe(async (data: any) => {
 				this.pushUpdate('Received data from API');
-				this.zone
 				const sets = ['pm25', 'pm10', 'temperatureLow', 'temperatureHigh', 'pressure', 'lightLevel', 'humidity']
 				const valueData = []
 				this.pushUpdate('Registering data sets')
@@ -84,11 +88,13 @@ export class AppComponent implements OnInit, AfterViewInit {
 				this.pushUpdate('Adding markers for ' + Object.keys(data.response).length + ' registrations')
 				Object.keys(data.response).forEach(date => {
 					if (data.response[date].particles) {
+						// AQI Markers require a calculation to be run over the collected values, after these calculations the addMarkers() function is called
 						this.addAQIMarkers(data.response[date].particles, 'pm25', date, valueData['pm25'], 25)
 						this.addAQIMarkers(data.response[date].particles, 'pm10', date, valueData['pm10'], 10)
 					}
 
 					if (data.response[date].sensors) {
+						// Will convert collected data to graph readable formats, grouped by date
 						this.addMarkers(data.response[date].sensors, 'temperatureLow', date, valueData['temperatureLow'])
 						this.addMarkers(data.response[date].sensors, 'temperatureHigh', date, valueData['temperatureHigh'])
 						this.addMarkers(data.response[date].sensors, 'pressure', date, valueData['pressure'])
@@ -106,6 +112,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 					let minSet = false
 					for (let i = this.dataPoints.length - 1; i >= 0; i--) {
 						// Single value inside a datapoint set
+						// TODO : Re-use or split up marker code
 						if (this.dataPoints[set][i].y === valueData[set]['max']) {
 							this.dataPoints[set][i].markerType = 'cross'
 							this.dataPoints[set][i].markerColor = 'cyan'
@@ -121,6 +128,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 				})
 
 				this.pushUpdate(`Sorting all data sets`)
+				// Sorts all given data sets (here, all) by date
 				this.sortAllDataPointSets(sets)
 
 				this.pushUpdate(`Generating charts`)
@@ -229,14 +237,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	generateAverageBySet(data: Array<any>): Array<any> {
 		this.pushUpdate(`Generating dataset averages with ${data.length} entries`)
-		let totalByDay = []
+		const totalByDay = []
 		for (let i = 0; i < data.length; i++) {
 			const date = moment(data[i].label, 'DD MMM YYYY HH:mm').dayOfYear();
 			if (!totalByDay[date]) totalByDay[date] = { value: 0, amount: 0, day: data[i].label }
 			totalByDay[date].value += data[i].y
 			totalByDay[date].amount += 1;
 		}
-		let averageByDay = []
+		const averageByDay = []
 		for (let i = 0; i < totalByDay.length; i++) {
 			if (totalByDay[i]) {
 				averageByDay.push({
@@ -290,7 +298,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			toolTip: {
 				shared: true
 			},
-			data: data
+			data
 		})
 		return chart
 	}
