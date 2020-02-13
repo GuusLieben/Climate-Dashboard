@@ -1,0 +1,80 @@
+[
+    {
+        "id": "temperature",
+        "title": "Temperature",
+        "label": "Celcius (°C)",
+        "labelFormat": "0.00 °C",
+        "sets": [
+            {
+                "id": "temperatureLow",
+                "label": "First measure",
+                "color": "#AC5838"
+            },
+            {
+                "id": "temperatureHigh",
+                "label": "Second measure",
+                "color": "#CCAC32"
+            }
+        ]
+    },
+    {
+        "id": "particulateMatter",
+        "title": "Particulate Matter",
+        "label": "Emission",
+        "labelFormat": "0.00 μm",
+        "isAQI": true,
+        "sets": [
+            {
+                "id": "pm10",
+                "label": "1.0 micrometer",
+                "color": "#B438A4",
+                "type": 10
+            },
+            {
+                "id": "pm25",
+                "label": "2.5 micrometer",
+                "color": "#696D80",
+                "type": 25
+            }
+        ]
+    },
+    {
+        "id": "pressure",
+        "title": "Pressure",
+        "label": "Hectopascal (hPa)",
+        "labelFormat": "0 hPa",
+        "sets": [
+            {
+                "id": "pressure",
+                "label": "Pressure",
+                "color": "#7180B9"
+            }
+        ]
+    },
+    {
+        "id": "light",
+        "title": "Light Level",
+        "label": "Lux",
+        "labelFormat": "0 lx",
+        "sets": [
+            {
+                "id": "lightLevel",
+                "label": "Light Level",
+                "color": "#6C6A4D"
+            }
+        ]
+    },
+    {
+        "id": "humidity",
+        "title": "Humidity",
+        "label": "Percentage",
+        "labelFormat": "0,00%",
+        "sets": [
+            {
+                "id": "humidity",
+                "label": "Humidity",
+                "color": "#4F7566"
+            }
+        ]
+    }
+]

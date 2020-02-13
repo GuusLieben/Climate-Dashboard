@@ -2,8 +2,6 @@ import { Component, OnInit, AfterViewInit, ApplicationRef, NgZone } from '@angul
 import * as CanvasJS from '../assets/canvasjs.min'
 import { HttpClient } from '@angular/common/http'
 import * as moment from 'moment'
-import { Moment } from 'moment'
-import { NgbDateStruct, NgbCalendar } from '@ng-bootstrap/ng-bootstrap'
 
 @Component({
 	selector: 'app-root',
@@ -11,6 +9,8 @@ import { NgbDateStruct, NgbCalendar } from '@ng-bootstrap/ng-bootstrap'
 	styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, AfterViewInit {
+
+	public dataJSON = require('../assets/datapoints.json')
 
 	// HttpClient for API calls, NgZone for out-of-zone activities
 	constructor(private http: HttpClient, private zone: NgZone) { }
@@ -105,79 +105,60 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.zone.runOutsideAngular(() => {
 			this.pushUpdate('Connecting to API')
 			this.http.get('http://localhost:8080/api').subscribe(async (data: any) => {
-				this.pushUpdate('Received data from API');
-				const sets = ['pm25', 'pm10', 'temperatureLow', 'temperatureHigh', 'pressure', 'lightLevel', 'humidity']
-				const valueData = []
+				this.pushUpdate('Received data from API')
 				this.pushUpdate('Registering data sets')
-				sets.forEach(set => {
-					this.pushUpdate(`=> ${set}`);
-					this.registerDataPointSet(set)
-					valueData[set] = { min: null, max: null }
+
+				this.dataJSON.forEach((datapoint: any) => {
+					const valueData: Array<any> = []
+					const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id);
+					datapoint.sets.forEach(dataSet => {
+						this.pushUpdate(`=> ${datapoint.id}.${dataSet.id}`)
+						this.registerDataPointSet(dataSet.id)
+						valueData[dataSet.id] = { min: null, max: null }
+					})
+
+					this.pushUpdate('Adding markers for ' + Object.keys(data.response).length + ' registrations')
+					Object.keys(data.response).forEach(date => {
+						datapoint.sets.forEach((dataSet: { id: string, label: string, color: string, type?: number }) => {
+							if (datapoint.isAQI === true && data.response[date].particles)
+								this.addAQIMarkers(data.response[date].particles, dataSet.id, date, valueData[dataSet.id], dataSet.type ? dataSet.type : 0)
+							else if (data.response[date].sensors)
+								this.addMarkers(data.response[date].sensors, dataSet.id, date, valueData[dataSet.id])
+						})
+					})
+
+					// Iterate datapoint sets
+					this.pushUpdate(`Calculating minimum and maximum values for ${datapoint.id}`);
+					this.minMaxForSet(setIds, valueData);
+
+					this.pushUpdate(`Sorting all data sets for ${datapoint.id}`)
+					// Sorts all given data sets (here, all) by date
+					this.sortAllDataPointSets(setIds)
+
+					this.pushUpdate(`Generating chart '${datapoint.id}' with title '${datapoint.title}'`)
+					const chartDataPoints = Array.from(datapoint.sets, (dataSet: { id: string, label: string, color: string, type?: number }) => {
+						return {
+							label: dataSet.label,
+							data: this.dataPoints[dataSet.id],
+							color: dataSet.color
+						}
+					})
+
+					this.charts[datapoint.id] = this.generateChart(
+						`${datapoint.id}Chart`,
+						chartDataPoints,
+						datapoint.title,
+						datapoint.label,
+						datapoint.labelFormat)
+
+					this.pushUpdate(`Rendering all charts for ${datapoint.id}`)
+					this.renderChart([], 0, datapoint.id)
+
 				})
 
-				this.pushUpdate('Adding markers for ' + Object.keys(data.response).length + ' registrations')
-				Object.keys(data.response).forEach(date => {
-					if (data.response[date].particles) {
-						// AQI Markers require a calculation to be run over the collected values, after these calculations the addMarkers() function is called
-						this.addAQIMarkers(data.response[date].particles, 'pm25', date, valueData['pm25'], 25)
-						this.addAQIMarkers(data.response[date].particles, 'pm10', date, valueData['pm10'], 10)
-					}
-
-					if (data.response[date].sensors) {
-						// Will convert collected data to graph readable formats, grouped by date
-						this.addMarkers(data.response[date].sensors, 'temperatureLow', date, valueData['temperatureLow'])
-						this.addMarkers(data.response[date].sensors, 'temperatureHigh', date, valueData['temperatureHigh'])
-						this.addMarkers(data.response[date].sensors, 'pressure', date, valueData['pressure'])
-						this.addMarkers(data.response[date].sensors, 'lightLevel', date, valueData['lightLevel'])
-						this.addMarkers(data.response[date].sensors, 'humidity', date, valueData['humidity'])
-					}
-				})
-
-				// Iterate datapoint sets
-				this.pushUpdate('Calculating minimum and maximum values');
-				this.minMaxForSet(sets, valueData);
-
-				this.pushUpdate(`Sorting all data sets`)
-				// Sorts all given data sets (here, all) by date
-				this.sortAllDataPointSets(sets)
-
-				this.pushUpdate(`Generating charts`)
-				this.charts['pm'] = this.generateChart(
-					'pmChart',
-					[{ label: '1.0 micrometer', data: this.dataPoints['pm10'], color: '#B483A4' },
-					{ label: '2.5 micrometer', data: this.dataPoints['pm25'], color: '#696D80' }],
-					'Particulate matter', 'Emission', '0.00 μm'
-				)
-
-				this.charts['temp'] = this.generateChart(
-					'tempChart',
-					[{ label: 'First measure', data: this.dataPoints['temperatureLow'], color: '#AC5838' },
-					{ label: 'Second measure', data: this.dataPoints['temperatureHigh'], color: '#CCAC32' }],
-					'Temperatures', 'Celcius (°C)', '0.00 °C'
-				)
-
-				this.charts['pressure'] = this.generateChart(
-					'pressChart',
-					[{ label: 'Pressure', data: this.dataPoints['pressure'], color: '#7180B9' }],
-					'Pressure', 'Hectopascal (hPa)', '0 hPa'
-				)
-
-				this.charts['light'] = this.generateChart(
-					'lightChart',
-					[{ label: 'Lux', data: this.dataPoints['lightLevel'], color: '#6C6A4D' }],
-					'Light Level', 'Lux', '0 lx'
-				)
-
-				this.charts['humi'] = this.generateChart(
-					'humChart',
-					[{ label: 'Percentage', data: this.dataPoints['humidity'], color: '#4F7566' }],
-					'Humidity', 'Percentage', '0,00%'
-				)
-				this.pushUpdate(`Rendering all charts`)
 				this.rendering = false
 				this.showHistory = false
 
-				this.renderChart([], 0, 'pm', 'temp', 'pressure', 'light', 'humi')
 				this.pushUpdate(`Done.`)
 			}, error => {
 				console.log('Failed to get data')
@@ -195,30 +176,26 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.pushUpdate('Resetting filters')
 		this.selected.end = null
 		this.selected.start = null
-		this.resetFilter('temp', 'temperatureHigh', 'temperatureLow')
-		this.resetFilter('pm', 'pm10', 'pm25')
-		this.resetFilter('pressure', 'pressure')
-		this.resetFilter('light', 'lightLevel')
-		this.resetFilter('humi', 'humidity')
+		this.dataJSON.forEach(datapoint => {
+			const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id);
+			this.resetFilter(datapoint.id, ...setIds)
+		})	
 		this.pushUpdate('Done filtering.')
 	}
 
 	applyDateFilter() {
-		this.pushUpdate('Applying date filter')
 		if (this.structValid()) {
+			this.pushUpdate('Applying date filter')
 			this.pushUpdate('=> Struct validated')
 			const firstDate = this.selected.start
 			const lastDate = this.selected.end
 
-			this.filterChartByDate('temp', firstDate, lastDate, 'temperatureLow', 'temperatureHigh')
-			this.filterChartByDate('pm', firstDate, lastDate, 'pm10', 'pm25')
-			this.filterChartByDate('pressure', firstDate, lastDate, 'pressure')
-			this.filterChartByDate('light', firstDate, lastDate, 'lightLevel')
-			this.filterChartByDate('humi', firstDate, lastDate, 'humidity')
-		} else {
-			this.pushUpdate('=> Invalid Struct, discarding')
+			this.dataJSON.forEach(datapoint => {
+				const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id);
+				this.filterChartByDate(datapoint.id, firstDate, lastDate, ...setIds)
+			})
+			this.pushUpdate('Done filtering.')
 		}
-		this.pushUpdate('Done filtering.')
 	}
 
 	filterChartByDate(chartId: string, startDate: string, endDate: string, ...dataPointIds: string[]) {
@@ -318,20 +295,13 @@ export class AppComponent implements OnInit, AfterViewInit {
 		for (let i = 0; i < pms.length; i++)
 			if (input >= pms[i] && input <= pms[i + 1])
 				return ((this.aqi[i + 1] - this.aqi[i]) / (pms[i + 1] - pms[i])) * (input - pms[i]) + this.aqi[i]
-
-		// Alternative method using .forEach
-		// let ret = 0
-		// pms
-		// .filter(it => (input >= it && input <= pms.indexOf(it)+1))
-		// .forEach(it => ret = ((this.aqi[pms.indexOf(it) + 1] - this.aqi[pms.indexOf(it)]) / (pms[pms.indexOf(it) + 1] - pms[pms.indexOf(it)])) * (input - pms[pms.indexOf(it)]) + this.aqi[pms.indexOf(it)])
-		// return ret
 	}
 
 	addMarkers(sensors: Array<any>, value: string, date: string, valueData: any) {
 		sensors.forEach(measure => {
 			const dateFormat = moment(date + ' ' + measure.time, 'DD.MM.YYYY HH:mm:ss').format('DD MMM YYYY HH:mm')
 			this.dataPoints[value].push({
-				y: measure[value],
+				y: measure[value] ?? 0,
 				label: dateFormat,
 				markerType: 'none'
 			})

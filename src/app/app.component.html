@@ -1,5 +1,5 @@
 <div class="wrapper">
-    <div [ngClass]="isRendering() ? 'hidden' : null">
+    <div [ngClass]="isRendering() ? 'hidden' : 'charts'">
         <p>
             <span>
                 <b style="margin-right: 25px">Range : {{formatStructs()}}</b>
@@ -10,22 +10,14 @@
                     (click)="showHistory = true">History</button>
             </span>
         </p>
-        <div class="chart" id="pmChart"></div>
         <div class="row">
-            <div class="col-6 col-lg-6 col-sm-12">
-                <div class="chart" id="pressChart"></div>
-            </div>
-            <div class="col-6 col-lg-6 col-sm-12">
-                <div class="chart" id="tempChart"></div>
+            <div class="col-6 col-lg-6 col-sm-12" *ngFor="let chart of dataJSON">
+                <div class="chart" id="{{chart.id}}Chart"></div>
             </div>
         </div>
-        <div class="row">
-            <div class="col-6 col-lg-6 col-sm-12">
-                <div class="chart" id="lightChart"></div>
-            </div>
-            <div class="col-6 col-lg-6 col-sm-12">
-                <div class="chart" id="humChart"></div>
-            </div>
+
+        <div class="footer">
+            <b>&copy; 2019 - {{year}} Guus Lieben</b>
         </div>
     </div>
 
@@ -47,7 +39,4 @@
         </div>
     </div>
 
-    <div class="footer">
-        <b>&copy; 2019 - {{year}} Guus Lieben</b>
-    </div>
 </div>
