@@ -1,8 +1,8 @@
-import { Component, OnInit, AfterViewInit, ApplicationRef, NgZone } from '@angular/core'
+import { Component, OnInit, AfterViewInit, ApplicationRef, NgZone, HostBinding } from '@angular/core'
 import * as CanvasJS from '../assets/canvasjs.min'
 import { HttpClient } from '@angular/common/http'
 import * as moment from 'moment'
-// import * as parser from 'math-expression-evaluator'
+import { DomSanitizer } from '@angular/platform-browser'
 
 @Component({
 	selector: 'app-root',
@@ -11,10 +11,52 @@ import * as moment from 'moment'
 })
 export class AppComponent implements OnInit, AfterViewInit {
 
-	public dataJSON = require('../assets/datasettings.json')
+	// Configuration file
+	public settings = require('../assets/datasettings.json')
+
+	// CSS Variables
+	public cssThemeValues = {
+		dark1: {
+			background: '#2A2A2A',
+			'secondary-background': '#3E3E3E',
+			'action-background': '#333333',
+			text: '#FFFFFF'
+		},
+		dark2: {
+			background: '#32373A',
+			'secondary-background': '#2f3335',
+			'action-background': '#2a353b',
+			text: '#FFFFFF'
+		},
+		light1: {
+			background: '#FFFFFF',
+			'secondary-background': '#E3E3E3',
+			'action-background': '#CCCCCC',
+			text: '#000000'
+		},
+		light2: {
+			background: '#FFFFFF',
+			'secondary-background': '#E3E3E3',
+			'action-background': '#CCCCCC',
+			text: '#000000'
+		},
+	}
+
+	private themeName: string = 'light1'
 
 	// HttpClient for API calls, NgZone for out-of-zone activities
-	constructor(private http: HttpClient, private zone: NgZone) { }
+	constructor(private http: HttpClient, private zone: NgZone) {
+		let themeSet: { background: string, 'secondary-background': string, 'action-background': string, text: string };
+
+		if (this.settings.theme === 'custom') themeSet = this.settings.themeSet
+		else if (this.cssThemeValues[this.settings.theme]) {
+			themeSet = this.cssThemeValues[this.settings.theme]
+			this.themeName = this.settings.theme
+		}
+		else themeSet = this.cssThemeValues['light1']
+
+		Object.keys(themeSet).forEach(reg => document.documentElement.style.setProperty(`--${reg}`, themeSet[reg]))
+	}
 
 	// Custom calculation variables
 	private math = require('mathjs')
@@ -30,7 +72,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	// Progress/history store
 	public progress: Array<any> = []
 	public showHistory: boolean = true
-	public historyEnabled = this.dataJSON.historyEnabled
+	public historyEnabled = this.settings.historyEnabled
 
 	// Active date filter, ='All' if either are null
 	public selected: { start: string, end: string } = { start: null, end: null }
@@ -104,8 +146,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 	async ngAfterViewInit() {
 		// Run outside Angular's zone to prevent hanging the UI
 		this.zone.runOutsideAngular(() => {
-			this.dataJSON.sources.forEach(source => {
-				const sourceIndex = this.dataJSON.sources.indexOf(source)
+			this.settings.sources.forEach(source => {
+				const sourceIndex = this.settings.sources.indexOf(source)
 				this.pushUpdate(`Connecting to ${source.label}`)
 
 				this.http.get(source.url).subscribe(async (apiResponse: any) => {
@@ -162,7 +204,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 						this.pushUpdate(`Rendering all charts for ${dataRegistration.id}`)
 						this.renderChart([], 0, source.id + dataRegistration.id)
 
-						if (sourceIndex === this.dataJSON.sources.length - 1) {
+						if (sourceIndex === this.settings.sources.length - 1) {
 							this.rendering = false
 							this.showHistory = false
 
@@ -186,7 +228,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.pushUpdate('Resetting filters')
 		this.selected.end = null
 		this.selected.start = null
-		this.dataJSON.sources.forEach(source => {
+		this.settings.sources.forEach(source => {
 			source.data.forEach(datapoint => {
 				const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
 				this.resetFilter(source.id + datapoint.id, ...setIds)
@@ -202,7 +244,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			const firstDate = this.selected.start
 			const lastDate = this.selected.end
 
-			this.dataJSON.sources.forEach(source => {
+			this.settings.sources.forEach(source => {
 				source.data.forEach(datapoint => {
 					const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
 					this.filterChartByDate(source.id + datapoint.id, firstDate, lastDate, ...setIds)
@@ -218,7 +260,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 		for (let i = 0; i < dataPointIds.length; i++) {
 			const data = this.dataPoints[dataPointIds[i]].filter((datapoint: any) => {
-				const dpDate = moment(datapoint.label, this.dataJSON.prettyDateTimeFormat).valueOf()
+				const dpDate = moment(datapoint.label, this.settings.prettyDateTimeFormat).valueOf()
 				return (dpDate >= leftD && dpDate <= rightD)
 			})
 			if (data.length === 0) data.push({ y: 0, label: 'No data in range' })
@@ -235,13 +277,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	async ngOnInit() {
+
 	}
 
 	generateAverageBySet(data: Array<any>): Array<any> {
 		this.pushUpdate(`Generating dataset averages with ${data.length} entries`)
 		const totalByDay = []
 		for (let i = 0; i < data.length; i++) {
-			const date = moment(data[i].label, this.dataJSON.prettyDateTimeFormat).dayOfYear()
+			const date = moment(data[i].label, this.settings.prettyDateTimeFormat).dayOfYear()
 			if (!totalByDay[date]) totalByDay[date] = { value: 0, amount: 0, day: data[i].label }
 			totalByDay[date].value += data[i].y
 			totalByDay[date].amount += 1
@@ -277,7 +320,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			animationEnabled: false,
 			exportEnabled: true,
 			zoomEnabled: true,
-			theme: 'dark1',
+			theme: this.themeName,
 			title: {
 				text: title
 			},
@@ -332,7 +375,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	addMarkers(dataSet: Array<any>, value: string, date: string, valueData: any, dataFormat: any, markerType?: string) {
 		dataSet.forEach(measure => {
-			const dateFormat = moment(date + ' ' + measure.time, `${dataFormat.date} ${dataFormat.time}`).format(this.dataJSON.prettyDateTimeFormat)
+			const dateFormat = moment(date + ' ' + measure.time, `${dataFormat.date} ${dataFormat.time}`).format(this.settings.prettyDateTimeFormat)
 			this.dataPoints[value].push({
 				y: measure[value] ?? 0,
 				label: dateFormat,
@@ -360,8 +403,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		sets.forEach(set => {
 			this.pushUpdate(`=> ${set}`)
 			this.dataPoints[set] = this.dataPoints[set].sort((left, right) => {
-				const leftDate = moment(left.label, this.dataJSON.prettyDateTimeFormat)
-				const rightDate = moment(right.label, this.dataJSON.prettyDateTimeFormat)
+				const leftDate = moment(left.label, this.settings.prettyDateTimeFormat)
+				const rightDate = moment(right.label, this.settings.prettyDateTimeFormat)
 				const difference = leftDate.diff(rightDate)
 
 				if (difference > 0) return 1

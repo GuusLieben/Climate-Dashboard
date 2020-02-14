@@ -1,4 +1,11 @@
 {
+    "theme": "dark1",
+    "themeSet": {
+        "background": "red",
+        "secondary-background": "hotpink",
+        "action-background": "rebeccapurple",
+        "text": "cyan"
+    },
     "sourceLabels": true,
     "historyEnabled": true,
     "prettyDateTimeFormat": "DD MMM YYYY HH:mm",

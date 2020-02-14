@@ -1,12 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
 
-:root {
-    --background: #2A2A2A;
-    --secondary-background: #3e3e3e;
-    --action-background: #333;
-    --text: #fff;
-}
-
 body {
     background-color: var(--background);
     font-family: 'Courier New', Courier, monospace;
@@ -220,7 +213,7 @@ ngb-datepicker {
 .banner {
     height: 200px;
     max-height: 200px;
-    background-image: url('https://www.mamboweb.nl/wp-content/uploads/2016/03/sidney-header.jpg');
+    background: linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) ), url('https://www.mamboweb.nl/wp-content/uploads/2016/03/sidney-header.jpg');
     background-size: cover;
     background-position: center;
     margin-bottom: 35px;

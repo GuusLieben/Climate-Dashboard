@@ -11,8 +11,8 @@
                 <button *ngIf="historyEnabled === true" class="reset" (click)="showHistory = true">History</button>
             </span>
         </p>
-        <div *ngFor="let source of dataJSON.sources">
-            <div class="text-center" *ngIf="dataJSON.sourceLabels === true">
+        <div *ngFor="let source of settings.sources">
+            <div class="text-center" *ngIf="settings.sourceLabels === true">
                 <h1><b>{{source.label}}</b></h1>
                 <hr>
             </div>
