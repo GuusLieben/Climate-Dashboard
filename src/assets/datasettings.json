@@ -1,7 +1,7 @@
 {
     "url": "http://localhost:8080/api",
     "historyEnabled": true,
-    "dataFormat": {
+    "sourceDataFormat": {
         "date": "DD.MM.YYYY",
         "time": "HH:mm:ss"
     },

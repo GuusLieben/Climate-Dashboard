@@ -123,9 +123,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 						datapoint.sets.forEach((dataSet: { id: string, label: string, color: string, formula?: string, variables?: number[][], baseSet?: number }) => {
 							if (data.response[date][datapoint.location.substring(5)]) {
 								if (datapoint.formula)
-									this.addFormulaMarkers(data.response[date].particles, dataSet.id, date, datapoint.formula, valueData[dataSet.id], dataSet.variables ?? [], dataSet.baseSet ?? 0)
+									this.addFormulaMarkers(data.response[date][datapoint.location.substring(5)], dataSet.id, date, datapoint.formula, valueData[dataSet.id], dataSet.variables ?? [], dataSet.baseSet ?? 0)
 								else
-									this.addMarkers(data.response[date].sensors, dataSet.id, date, valueData[dataSet.id])
+									this.addMarkers(data.response[date][datapoint.location.substring(5)], dataSet.id, date, valueData[dataSet.id])
 							}
 						})
 					})
@@ -306,17 +306,22 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	evalFormula(formula: string, input: number, variableSets: number[][], baseSet: number) {
-		for (let i = 0; i < variableSets[baseSet].length; i++)
-			if (input >= variableSets[baseSet][i] && input <= variableSets[baseSet][i + 1]) {
-				let scope = this.createScope(variableSets, i)
-				scope.input = input
-				return this.math.evaluate(formula, scope)
-			}
+		if (variableSets.length > 0) {
+			for (let i = 0; i < variableSets[baseSet].length; i++)
+				if (input >= variableSets[baseSet][i] && input <= variableSets[baseSet][i + 1]) {
+					let scope = this.createScope(variableSets, i)
+					scope.input = input
+					return this.math.evaluate(formula, scope)
+				}
+		} else {
+			const scope = { input }
+			return this.math.evaluate(formula, scope)
+		}
 	}
 
 	addMarkers(sensors: Array<any>, value: string, date: string, valueData: any) {
 		sensors.forEach(measure => {
-			const dateFormat = moment(date + ' ' + measure.time, `${this.dataJSON.dataFormat.date} ${this.dataJSON.dataFormat.time}`).format(this.dataJSON.prettyDateTimeFormat)
+			const dateFormat = moment(date + ' ' + measure.time, `${this.dataJSON.sourceDataFormat.date} ${this.dataJSON.sourceDataFormat.time}`).format(this.dataJSON.prettyDateTimeFormat)
 			this.dataPoints[value].push({
 				y: measure[value] ?? 0,
 				label: dateFormat,
