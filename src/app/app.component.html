@@ -32,11 +32,12 @@
         });
     </script>
 
-    <div [ngClass]="showHistory && historyEnabled ? 'popup' : 'hidden'" (click)="showHistory = false">
-        <div (click)="showHistory=true">
+    <div [ngClass]="showHistory ? 'popup' : 'hidden'" (click)="showHistory = false">
+        <div (click)="showHistory=true" class="historyWrapper">
             <h1 class="loader">{{isRendering() ? 'Loading application' : 'History'}} <button class="reset history"
                     (click)="showHistory = false">Hide</button></h1>
-            <b *ngFor="let step of progress"><b><small>{{step.lastTook}}</small></b><br>{{step.new}}</b>
+            <div *ngIf="historyEnabled"><b
+                    *ngFor="let step of progress"><b><small>{{step.lastTook}}</small></b><br>{{step.new}}</b></div>
         </div>
     </div>
 

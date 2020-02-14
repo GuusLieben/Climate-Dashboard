@@ -197,7 +197,7 @@ ngb-datepicker {
     top: 0;
 }
 
-.popup div {
+.popup .historyWrapper {
     width: 50%;
     margin-left: 20%;
     padding: 50px;
