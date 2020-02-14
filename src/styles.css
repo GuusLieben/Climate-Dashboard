@@ -1,9 +1,16 @@
 /* You can add global styles to this file, and also import other style files */
 
+:root {
+    --background: #2A2A2A;
+    --secondary-background: #3e3e3e;
+    --action-background: #333;
+    --text: #fff;
+}
+
 body {
-    background-color: #2A2A2A;
+    background-color: var(--background);
     font-family: 'Courier New', Courier, monospace;
-    color: #fff;
+    color: var(--text);
     padding: 0;
 }
 
@@ -12,7 +19,7 @@ body {
 }
 
 .loader {
-    color: white;
+    color: var(--text);
     font-family: 'Courier New', Courier, monospace;
 }
 
@@ -32,7 +39,7 @@ body {
 .card {
     border-radius: 0px;
     border: 0;
-    background-color: #2A2A2A;
+    background-color: var(--background);
 }
 
 .card-body .row {
@@ -40,15 +47,15 @@ body {
 }
 
 .btn-light {
-    color: white !important;
+    color: var(--text) !important;
 }
 
 .btn-light:hover {
-    background: #222 !important;
+    background: var(--action-background) !important;
 }
 
 .ngb-dp-header, .ngb-dp-weekdays {
-    background: #333 !important;
+    background: var(--action-background) !important;
 }
 
 ngb-datepicker {
@@ -56,12 +63,12 @@ ngb-datepicker {
 }
 
 .md-drppicker, .calendar-table {
-    background-color: #2A2A2A !important;
+    background-color: var(--background) !important;
     border: 0 !important;
 }
 
 .off {
-    background: #2a2a2a !important;
+    background: var(--background) !important;
 }
 
 .md-drppicker td.active, .md-drppicker td.active:hover {
@@ -69,7 +76,7 @@ ngb-datepicker {
 }
 
 .off {
-    background: #3e3e3e;
+    background: var(--secondary-background);
     border-radius: 0;
 }
 
@@ -170,11 +177,11 @@ ngb-datepicker {
 }
 
 .prev, .next {
-    background-color: #3e3e3e !important;
+    background-color: var(--secondary-background) !important;
 }
 
 .prev:hover, .next:hover {
-    background-color: #505050 !important;
+    background-color: var(--action-background) !important;
 }
 
 .canvasjs-chart-credit {
@@ -197,7 +204,7 @@ ngb-datepicker {
     height: 80vh;
     top: 10vh;
     position: absolute;
-    background-color: #3e3e3e;
+    background-color: var(--secondary-background);
     overflow-y: scroll;
 }
 

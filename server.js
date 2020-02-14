@@ -51,16 +51,7 @@ app.get('/api', (req, res) => {
         });
       });
 
-      res.status(200).json({
-        legend: {
-          pm25: 'Particulate Matter < 2.5 micrometer',
-          pm10: 'Particulate Matter < 1.0 micrometer',
-          pressure: 'Hectopascal',
-          lightLevel: 'Lux',
-          humidity: 'Percentage of humid air'
-        },
-        response
-      });
+      res.status(200).json({response});
     }
   });
 })
