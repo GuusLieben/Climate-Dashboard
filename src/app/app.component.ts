@@ -14,8 +14,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	public dataJSON = require('../assets/datasettings.json')
 
 	// HttpClient for API calls, NgZone for out-of-zone activities
-	constructor(private http: HttpClient, private zone: NgZone) {
-	}
+	constructor(private http: HttpClient, private zone: NgZone) { }
 
 	// Custom calculation variables
 	private math = require('mathjs')
@@ -37,7 +36,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	public selected: { start: string, end: string } = { start: null, end: null }
 
 	// lastMillis will display when the previous task was started, to render how long a task took
-	private lastMillis: number;
+	private lastMillis: number
 
 	// Date Struct is valid if neither are null, and date formats are valid (through MomentJS)
 	structValid(): boolean {
@@ -66,7 +65,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	pushUpdate(update: string) {
 		const currentMillis = moment().milliseconds()
 		let lastTook = (currentMillis - this.lastMillis)
-		if (lastTook < 0) lastTook = -lastTook;
+		if (lastTook < 0) lastTook = -lastTook
 
 		// Run the logging inside Angular's zone, to directly push an update even if the update is called from outside Angular's zone
 		this.zone.run(() => this.progress.push({
@@ -112,7 +111,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 				this.dataJSON.data.filter((datapoint: any) => datapoint.location).forEach((datapoint: any) => {
 					const valueData: Array<any> = []
-					const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id);
+					const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
 					datapoint.sets.forEach((dataSet: any) => {
 						this.pushUpdate(`=> ${datapoint.id}.${dataSet.id}`)
 						this.registerDataPointSet(dataSet.id)
@@ -132,8 +131,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 					})
 
 					// Iterate datapoint sets
-					this.pushUpdate(`Calculating minimum and maximum values for ${datapoint.id}`);
-					this.minMaxForSet(setIds, valueData);
+					this.pushUpdate(`Calculating minimum and maximum values for ${datapoint.id}`)
+					this.minMaxForSet(setIds, valueData)
 
 					this.pushUpdate(`Sorting all data sets for ${datapoint.id}`)
 					// Sorts all given data sets (here, all) by date
@@ -181,7 +180,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.selected.end = null
 		this.selected.start = null
 		this.dataJSON.forEach(datapoint => {
-			const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id);
+			const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
 			this.resetFilter(datapoint.id, ...setIds)
 		})
 		this.pushUpdate('Done filtering.')
@@ -195,7 +194,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			const lastDate = this.selected.end
 
 			this.dataJSON.forEach(datapoint => {
-				const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id);
+				const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
 				this.filterChartByDate(datapoint.id, firstDate, lastDate, ...setIds)
 			})
 			this.pushUpdate('Done filtering.')
@@ -231,10 +230,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.pushUpdate(`Generating dataset averages with ${data.length} entries`)
 		const totalByDay = []
 		for (let i = 0; i < data.length; i++) {
-			const date = moment(data[i].label, this.dataJSON.prettyDateTimeFormat).dayOfYear();
+			const date = moment(data[i].label, this.dataJSON.prettyDateTimeFormat).dayOfYear()
 			if (!totalByDay[date]) totalByDay[date] = { value: 0, amount: 0, day: data[i].label }
 			totalByDay[date].value += data[i].y
-			totalByDay[date].amount += 1;
+			totalByDay[date].amount += 1
 		}
 		const averageByDay = []
 		for (let i = 0; i < totalByDay.length; i++) {
@@ -246,7 +245,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 				})
 			}
 		}
-		return averageByDay;
+		return averageByDay
 	}
 
 	generateChart(id: string, dataSets: Array<any>, title: string, labelY: string, formatY?: string): CanvasJS.Chart {
@@ -297,13 +296,13 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	createScope(variableSets: number[][], index: number): any {
 		let scope = {}
-		const length = variableSets[0].length;
+		const length = variableSets[0].length
 		for (let i = 0; i < variableSets.length; i++) {
 			if (variableSets[i].length != length) console.error(`Variable set ${i} does not have the same length as set 0 (${length}). This might cause unexpected behavior!`)
 			scope[`set${i}_curr`] = variableSets[i][index]
 			scope[`set${i}_next`] = variableSets[i][index + 1]
 		}
-		return scope;
+		return scope
 	}
 
 	evalFormula(formula: string, input: number, variableSets: number[][], baseSet: number) {
