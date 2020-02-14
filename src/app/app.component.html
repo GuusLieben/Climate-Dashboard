@@ -6,12 +6,12 @@
                 <input type="text" matInput ngxDaterangepickerMd [locale]="{applyLabel: 'Apply', format: 'DD-MM-YYYY'}"
                     startKey="start" endKey="end" [(ngModel)]="selected" (ngModelChange)="applyDateFilter()"
                     name="daterange" class="datepicker" />
-                <button class="reset" (click)="resetAllFilters()">Reset</button> <button class="reset"
-                    (click)="showHistory = true">History</button>
+                <button class="reset" (click)="resetAllFilters()">Reset</button>
+                <button *ngIf="historyEnabled === true" class="reset" (click)="showHistory = true">History</button>
             </span>
         </p>
         <div class="row">
-            <div class="col-6 col-lg-6 col-sm-12" *ngFor="let chart of dataJSON">
+            <div class="col-6 col-lg-6 col-sm-12" *ngFor="let chart of dataJSON.data">
                 <div class="chart" id="{{chart.id}}Chart"></div>
             </div>
         </div>
@@ -31,7 +31,7 @@
         });
     </script>
 
-    <div [ngClass]="showHistory ? 'popup' : 'hidden'" (click)="showHistory = false">
+    <div [ngClass]="showHistory && historyEnabled ? 'popup' : 'hidden'" (click)="showHistory = false">
         <div (click)="showHistory=true">
             <h1 class="loader">{{isRendering() ? 'Loading application' : 'History'}} <button class="reset history"
                     (click)="showHistory = false">Hide</button></h1>

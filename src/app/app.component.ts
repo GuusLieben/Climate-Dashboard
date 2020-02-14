@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, ApplicationRef, NgZone } from '@angul
 import * as CanvasJS from '../assets/canvasjs.min'
 import { HttpClient } from '@angular/common/http'
 import * as moment from 'moment'
+// import * as parser from 'math-expression-evaluator'
 
 @Component({
 	selector: 'app-root',
@@ -10,16 +11,16 @@ import * as moment from 'moment'
 })
 export class AppComponent implements OnInit, AfterViewInit {
 
-	public dataJSON = require('../assets/datapoints.json')
+	public dataJSON = require('../assets/datasettings.json')
 
 	// HttpClient for API calls, NgZone for out-of-zone activities
-	constructor(private http: HttpClient, private zone: NgZone) { }
+	constructor(private http: HttpClient, private zone: NgZone) {
+	}
 
-	// AQI calculation variables
-	private pm25arr = [0, 12, 35.4, 55.4, 150.4, 250.4, 350.4, 500.4]
-	private pm10arr = [0, 54, 154, 254, 354, 424, 504, 604]
-	private aqi = [0, 50, 100, 150, 200, 300, 400, 500]
+	// Custom calculation variables
+	private math = require('mathjs')
 
+	// Copyright variable
 	public year = moment().year()
 
 	// Chart data
@@ -29,7 +30,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	// Progress/history store
 	public progress: Array<any> = []
-	public showHistory: boolean = true;
+	public showHistory: boolean = true
+	public historyEnabled = this.dataJSON.historyEnabled
 
 	// Active date filter, ='All' if either are null
 	public selected: { start: string, end: string } = { start: null, end: null }
@@ -104,14 +106,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 		// Run outside Angular's zone to prevent hanging the UI
 		this.zone.runOutsideAngular(() => {
 			this.pushUpdate('Connecting to API')
-			this.http.get('http://localhost:8080/api').subscribe(async (data: any) => {
+			this.http.get(this.dataJSON.url).subscribe(async (data: any) => {
 				this.pushUpdate('Received data from API')
 				this.pushUpdate('Registering data sets')
 
-				this.dataJSON.forEach((datapoint: any) => {
+				this.dataJSON.data.filter((datapoint: any) => datapoint.location).forEach((datapoint: any) => {
 					const valueData: Array<any> = []
 					const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id);
-					datapoint.sets.forEach(dataSet => {
+					datapoint.sets.forEach((dataSet: any) => {
 						this.pushUpdate(`=> ${datapoint.id}.${dataSet.id}`)
 						this.registerDataPointSet(dataSet.id)
 						valueData[dataSet.id] = { min: null, max: null }
@@ -119,11 +121,13 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 					this.pushUpdate('Adding markers for ' + Object.keys(data.response).length + ' registrations')
 					Object.keys(data.response).forEach(date => {
-						datapoint.sets.forEach((dataSet: { id: string, label: string, color: string, type?: number }) => {
-							if (datapoint.isAQI === true && data.response[date].particles)
-								this.addAQIMarkers(data.response[date].particles, dataSet.id, date, valueData[dataSet.id], dataSet.type ? dataSet.type : 0)
-							else if (data.response[date].sensors)
-								this.addMarkers(data.response[date].sensors, dataSet.id, date, valueData[dataSet.id])
+						datapoint.sets.forEach((dataSet: { id: string, label: string, color: string, formula?: string, variables?: number[][], baseSet?: number }) => {
+							if (data.response[date][datapoint.location.substring(5)]) {
+								if (datapoint.formula)
+									this.addFormulaMarkers(data.response[date].particles, dataSet.id, date, datapoint.formula, valueData[dataSet.id], dataSet.variables ?? [], dataSet.baseSet ?? 0)
+								else
+									this.addMarkers(data.response[date].sensors, dataSet.id, date, valueData[dataSet.id])
+							}
 						})
 					})
 
@@ -179,7 +183,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.dataJSON.forEach(datapoint => {
 			const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id);
 			this.resetFilter(datapoint.id, ...setIds)
-		})	
+		})
 		this.pushUpdate('Done filtering.')
 	}
 
@@ -204,7 +208,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 		for (let i = 0; i < dataPointIds.length; i++) {
 			const data = this.dataPoints[dataPointIds[i]].filter((datapoint: any) => {
-				const dpDate = moment(datapoint.label, 'DD MMM YYYY HH:mm').valueOf()
+				const dpDate = moment(datapoint.label, this.dataJSON.prettyDateTimeFormat).valueOf()
 				return (dpDate >= leftD && dpDate <= rightD)
 			})
 			if (data.length === 0) data.push({ y: 0, label: 'No data in range' })
@@ -227,7 +231,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.pushUpdate(`Generating dataset averages with ${data.length} entries`)
 		const totalByDay = []
 		for (let i = 0; i < data.length; i++) {
-			const date = moment(data[i].label, 'DD MMM YYYY HH:mm').dayOfYear();
+			const date = moment(data[i].label, this.dataJSON.prettyDateTimeFormat).dayOfYear();
 			if (!totalByDay[date]) totalByDay[date] = { value: 0, amount: 0, day: data[i].label }
 			totalByDay[date].value += data[i].y
 			totalByDay[date].amount += 1;
@@ -291,15 +295,29 @@ export class AppComponent implements OnInit, AfterViewInit {
 		return chart
 	}
 
-	calcAQI(input: number, pms: Array<number>) {
-		for (let i = 0; i < pms.length; i++)
-			if (input >= pms[i] && input <= pms[i + 1])
-				return ((this.aqi[i + 1] - this.aqi[i]) / (pms[i + 1] - pms[i])) * (input - pms[i]) + this.aqi[i]
+	createScope(variableSets: number[][], index: number): any {
+		let scope = {}
+		const length = variableSets[0].length;
+		for (let i = 0; i < variableSets.length; i++) {
+			if (variableSets[i].length != length) console.error(`Variable set ${i} does not have the same length as set 0 (${length}). This might cause unexpected behavior!`)
+			scope[`set${i}_curr`] = variableSets[i][index]
+			scope[`set${i}_next`] = variableSets[i][index + 1]
+		}
+		return scope;
+	}
+
+	evalFormula(formula: string, input: number, variableSets: number[][], baseSet: number) {
+		for (let i = 0; i < variableSets[baseSet].length; i++)
+			if (input >= variableSets[baseSet][i] && input <= variableSets[baseSet][i + 1]) {
+				let scope = this.createScope(variableSets, i)
+				scope.input = input
+				return this.math.evaluate(formula, scope)
+			}
 	}
 
 	addMarkers(sensors: Array<any>, value: string, date: string, valueData: any) {
 		sensors.forEach(measure => {
-			const dateFormat = moment(date + ' ' + measure.time, 'DD.MM.YYYY HH:mm:ss').format('DD MMM YYYY HH:mm')
+			const dateFormat = moment(date + ' ' + measure.time, `${this.dataJSON.dataFormat.date} ${this.dataJSON.dataFormat.time}`).format(this.dataJSON.prettyDateTimeFormat)
 			this.dataPoints[value].push({
 				y: measure[value] ?? 0,
 				label: dateFormat,
@@ -310,11 +328,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 		})
 	}
 
-	addAQIMarkers(sensors: Array<any>, value: string, date: string, valueData: any, pmType: number) {
-		for (let i = 0; i < sensors.length; i++) {
-			if (pmType === 10) sensors[i][value] = this.calcAQI(sensors[i][value], this.pm10arr)
-			if (pmType === 25) sensors[i][value] = this.calcAQI(sensors[i][value], this.pm25arr)
-		}
+	addFormulaMarkers(sensors: Array<any>, value: string, date: string, formula: string, valueData: any, variables: number[][], baseSet: number) {
+		for (let i = 0; i < sensors.length; i++)
+			sensors[i][value] = this.evalFormula(formula, sensors[i][value], variables, baseSet)
 		this.addMarkers(sensors, value, date, valueData)
 	}
 
@@ -329,8 +345,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		sets.forEach(set => {
 			this.pushUpdate(`=> ${set}`)
 			this.dataPoints[set] = this.dataPoints[set].sort((left, right) => {
-				const leftDate = moment(left.label, 'DD MMM YYYY HH:mm')
-				const rightDate = moment(right.label, 'DD MMM YYYY HH:mm')
+				const leftDate = moment(left.label, this.dataJSON.prettyDateTimeFormat)
+				const rightDate = moment(right.label, this.dataJSON.prettyDateTimeFormat)
 				const difference = leftDate.diff(rightDate)
 
 				if (difference > 0) return 1
