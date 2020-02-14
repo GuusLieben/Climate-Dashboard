@@ -1,135 +1,141 @@
 {
-    "url": "http://localhost:8080/api",
     "historyEnabled": true,
-    "sourceDataFormat": {
-        "date": "DD.MM.YYYY",
-        "time": "HH:mm:ss"
-    },
     "prettyDateTimeFormat": "DD MMM YYYY HH:mm",
-    "data": [
+    "sources": [
         {
-            "id": "temperature",
-            "title": "Temperature",
-            "label": "Celcius (°C)",
-            "labelFormat": "0.00 °C",
-            "location": "data.sensors",
-            "sets": [
+            "id": "primary_",
+            "label": "Weather Station Primary",
+            "url": "http://localhost:8080/api",
+            "sourceDataFormat": {
+                "date": "DD.MM.YYYY",
+                "time": "HH:mm:ss"
+            },
+            "data": [
                 {
-                    "id": "temperatureLow",
-                    "label": "First measure",
-                    "color": "#AC5838"
-                },
-                {
-                    "id": "temperatureHigh",
-                    "label": "Second measure",
-                    "color": "#CCAC32"
-                }
-            ]
-        },
-        {
-            "id": "particulateMatter",
-            "title": "Particulate Matter",
-            "label": "Emission",
-            "labelFormat": "0.00 μm",
-            "formula": "((set0_next - set0_curr) / (set1_next - set1_curr)) * (input - set1_curr) + set0_curr",
-            "location": "data.particles",
-            "baseSet": 0,
-            "sets": [
-                {
-                    "id": "pm10",
-                    "label": "1.0 micrometer",
-                    "color": "#B438A4",
-                    "variables": [
-                        [
-                            0,
-                            50,
-                            100,
-                            150,
-                            200,
-                            300,
-                            400,
-                            500
-                        ],
-                        [
-                            0,
-                            54,
-                            154,
-                            254,
-                            354,
-                            424,
-                            504,
-                            604
-                        ]
+                    "id": "temperature",
+                    "title": "Temperature",
+                    "label": "Celcius (°C)",
+                    "labelFormat": "0.00 °C",
+                    "location": "data.sensors",
+                    "sets": [
+                        {
+                            "id": "temperatureLow",
+                            "label": "First measure",
+                            "color": "#AC5838"
+                        },
+                        {
+                            "id": "temperatureHigh",
+                            "label": "Second measure",
+                            "color": "#CCAC32"
+                        }
                     ]
                 },
                 {
-                    "id": "pm25",
-                    "label": "2.5 micrometer",
-                    "color": "#696D80",
-                    "variables": [
-                        [
-                            0,
-                            50,
-                            100,
-                            150,
-                            200,
-                            300,
-                            400,
-                            500
-                        ],
-                        [
-                            0,
-                            12,
-                            35.4,
-                            55.4,
-                            150.4,
-                            250.4,
-                            350.4,
-                            500.4
-                        ]
+                    "id": "particulateMatter",
+                    "title": "Particulate Matter",
+                    "label": "Emission",
+                    "labelFormat": "0.00 μm",
+                    "formula": "((set0_next - set0_curr) / (set1_next - set1_curr)) * (input - set1_curr) + set0_curr",
+                    "location": "data.particles",
+                    "baseSet": 0,
+                    "sets": [
+                        {
+                            "id": "pm10",
+                            "label": "1.0 micrometer",
+                            "color": "#B438A4",
+                            "variables": [
+                                [
+                                    0,
+                                    50,
+                                    100,
+                                    150,
+                                    200,
+                                    300,
+                                    400,
+                                    500
+                                ],
+                                [
+                                    0,
+                                    54,
+                                    154,
+                                    254,
+                                    354,
+                                    424,
+                                    504,
+                                    604
+                                ]
+                            ]
+                        },
+                        {
+                            "id": "pm25",
+                            "label": "2.5 micrometer",
+                            "color": "#696D80",
+                            "variables": [
+                                [
+                                    0,
+                                    50,
+                                    100,
+                                    150,
+                                    200,
+                                    300,
+                                    400,
+                                    500
+                                ],
+                                [
+                                    0,
+                                    12,
+                                    35.4,
+                                    55.4,
+                                    150.4,
+                                    250.4,
+                                    350.4,
+                                    500.4
+                                ]
+                            ]
+                        }
                     ]
-                }
-            ]
-        },
-        {
-            "id": "pressure",
-            "title": "Pressure",
-            "label": "Hectopascal (hPa)",
-            "labelFormat": "0 hPa",
-            "location": "data.sensors",
-            "sets": [
+                },
                 {
                     "id": "pressure",
-                    "label": "Pressure",
-                    "color": "#7180B9"
-                }
-            ]
-        },
-        {
-            "id": "light",
-            "title": "Light Level",
-            "label": "Lux",
-            "labelFormat": "0 lx",
-            "location": "data.sensors",
-            "sets": [
+                    "title": "Pressure",
+                    "label": "Hectopascal (hPa)",
+                    "labelFormat": "0 hPa",
+                    "location": "data.sensors",
+                    "sets": [
+                        {
+                            "id": "pressure",
+                            "label": "Pressure",
+                            "color": "#7180B9"
+                        }
+                    ]
+                },
                 {
-                    "id": "lightLevel",
-                    "label": "Light Level",
-                    "color": "#6C6A4D"
-                }
-            ]
-        },
-        {
-            "id": "humidity",
-            "title": "Humidity",
-            "label": "Percentage",
-            "labelFormat": "0,00%",
-            "location": "data.sensors",
-            "sets": [
+                    "id": "light",
+                    "title": "Light Level",
+                    "label": "Lux",
+                    "labelFormat": "0 lx",
+                    "location": "data.sensors",
+                    "sets": [
+                        {
+                            "id": "lightLevel",
+                            "label": "Light Level",
+                            "color": "#6C6A4D"
+                        }
+                    ]
+                },
                 {
                     "id": "humidity",
-                    "label": "Humidity",
-                    "color": "#4F7566"
+                    "title": "Humidity",
+                    "label": "Percentage",
+                    "labelFormat": "0,00%",
+                    "location": "data.sensors",
+                    "sets": [
+                        {
+                            "id": "humidity",
+                            "label": "Humidity",
+                            "color": "#4F7566"
+                        }
+                    ]
                 }
             ]
         }

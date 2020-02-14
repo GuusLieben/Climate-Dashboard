@@ -12,8 +12,8 @@
             </span>
         </p>
         <div class="row">
-            <div class="col-6 col-lg-6 col-sm-12" *ngFor="let chart of dataJSON.data">
-                <div class="chart" id="{{chart.id}}Chart"></div>
+            <div class="col-6 col-lg-6 col-sm-12" *ngFor="let id of chartIds">
+                <div class="chart" id="{{id}}Chart"></div>
             </div>
         </div>
 

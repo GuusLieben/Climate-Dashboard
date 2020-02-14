@@ -13,8 +13,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	public dataJSON = require('../assets/datasettings.json')
 
+	// HTML rendered charts
+	public chartIds = []
+
 	// HttpClient for API calls, NgZone for out-of-zone activities
-	constructor(private http: HttpClient, private zone: NgZone) { }
+	constructor(private http: HttpClient, private zone: NgZone) {
+		this.dataJSON.sources.forEach((source: any) =>
+			source.data.forEach((dataSet: any) => this.chartIds.push(source.id + dataSet.id)))
+	}
 
 	// Custom calculation variables
 	private math = require('mathjs')
@@ -104,68 +110,72 @@ export class AppComponent implements OnInit, AfterViewInit {
 	async ngAfterViewInit() {
 		// Run outside Angular's zone to prevent hanging the UI
 		this.zone.runOutsideAngular(() => {
-			this.pushUpdate('Connecting to API')
-			this.http.get(this.dataJSON.url).subscribe(async (data: any) => {
-				this.pushUpdate('Received data from API')
-				this.pushUpdate('Registering data sets')
+			this.dataJSON.sources.forEach(source => {
+				this.pushUpdate(`Connecting to ${source.label}`)
 
-				this.dataJSON.data.filter((datapoint: any) => datapoint.location).forEach((datapoint: any) => {
-					const valueData: Array<any> = []
-					const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
-					datapoint.sets.forEach((dataSet: any) => {
-						this.pushUpdate(`=> ${datapoint.id}.${dataSet.id}`)
-						this.registerDataPointSet(dataSet.id)
-						valueData[dataSet.id] = { min: null, max: null }
-					})
+				this.http.get(source.url).subscribe(async (apiResponse: any) => {
+					this.pushUpdate('Received data from API')
+					this.pushUpdate('Registering data sets')
 
-					this.pushUpdate('Adding markers for ' + Object.keys(data.response).length + ' registrations')
-					Object.keys(data.response).forEach(date => {
-						datapoint.sets.forEach((dataSet: { id: string, label: string, color: string, formula?: string, variables?: number[][], baseSet?: number }) => {
-							if (data.response[date][datapoint.location.substring(5)]) {
-								if (datapoint.formula)
-									this.addFormulaMarkers(data.response[date][datapoint.location.substring(5)], dataSet.id, date, datapoint.formula, valueData[dataSet.id], dataSet.variables ?? [], dataSet.baseSet ?? 0)
-								else
-									this.addMarkers(data.response[date][datapoint.location.substring(5)], dataSet.id, date, valueData[dataSet.id])
+					source.data.filter((datapoint: any) => datapoint.location).forEach((dataRegistration: any) => {
+						const valueData: Array<any> = []
+						const setIds: Array<string> = Array.from(dataRegistration.sets, (set: any) => set.id)
+						dataRegistration.sets.forEach((dataSet: any) => {
+							this.pushUpdate(`=> ${dataRegistration.id}.${dataSet.id}`)
+							this.registerDataPointSet(dataSet.id)
+							valueData[dataSet.id] = { min: null, max: null }
+						})
+
+						this.pushUpdate('Adding markers for ' + Object.keys(apiResponse.response).length + ' registrations')
+						Object.keys(apiResponse.response).forEach(date => {
+							dataRegistration.sets.forEach((dataSet: { id: string, label: string, color: string, formula?: string, variables?: number[][], baseSet?: number }) => {
+								if (apiResponse.response[date][dataRegistration.location.substring(5)]) {
+									if (dataRegistration.formula)
+										this.addFormulaMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, dataRegistration.formula, valueData[dataSet.id], dataSet.variables ?? [], dataSet.baseSet ?? 0, source.sourceDataFormat)
+									else
+										this.addMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, valueData[dataSet.id], source.sourceDataFormat)
+								}
+							})
+						})
+
+						// Iterate datapoint sets
+						this.pushUpdate(`Calculating minimum and maximum values for ${dataRegistration.id}`)
+						this.minMaxForSet(setIds, valueData)
+
+						this.pushUpdate(`Sorting all data sets for ${dataRegistration.id}`)
+						// Sorts all given data sets (here, all) by date
+						this.sortAllDataPointSets(setIds)
+
+						this.pushUpdate(`Generating chart '${dataRegistration.id}' with title '${dataRegistration.title}'`)
+						const chartDataPoints = Array.from(dataRegistration.sets, (dataSet: { id: string, label: string, color: string, type?: number }) => {
+							return {
+								label: dataSet.label,
+								data: this.dataPoints[dataSet.id],
+								color: dataSet.color
 							}
 						})
+
+						this.charts[source.id + dataRegistration.id] = this.generateChart(
+							`${source.id}${dataRegistration.id}Chart`,
+							chartDataPoints,
+							dataRegistration.title,
+							dataRegistration.label,
+							dataRegistration.labelFormat)
+
+						this.pushUpdate(`Rendering all charts for ${dataRegistration.id}`)
+						this.renderChart([], 0, source.id + dataRegistration.id)
+
 					})
 
-					// Iterate datapoint sets
-					this.pushUpdate(`Calculating minimum and maximum values for ${datapoint.id}`)
-					this.minMaxForSet(setIds, valueData)
+					this.rendering = false
+					this.showHistory = false
 
-					this.pushUpdate(`Sorting all data sets for ${datapoint.id}`)
-					// Sorts all given data sets (here, all) by date
-					this.sortAllDataPointSets(setIds)
-
-					this.pushUpdate(`Generating chart '${datapoint.id}' with title '${datapoint.title}'`)
-					const chartDataPoints = Array.from(datapoint.sets, (dataSet: { id: string, label: string, color: string, type?: number }) => {
-						return {
-							label: dataSet.label,
-							data: this.dataPoints[dataSet.id],
-							color: dataSet.color
-						}
-					})
-
-					this.charts[datapoint.id] = this.generateChart(
-						`${datapoint.id}Chart`,
-						chartDataPoints,
-						datapoint.title,
-						datapoint.label,
-						datapoint.labelFormat)
-
-					this.pushUpdate(`Rendering all charts for ${datapoint.id}`)
-					this.renderChart([], 0, datapoint.id)
-
+					this.pushUpdate(`Done.`)
+				}, error => {
+					console.error('An unknown error occurred : ', JSON.stringify(error))
 				})
-
-				this.rendering = false
-				this.showHistory = false
-
-				this.pushUpdate(`Done.`)
-			}, error => {
-				console.log('Failed to get data')
 			})
+
 		})
 	}
 
@@ -179,9 +189,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.pushUpdate('Resetting filters')
 		this.selected.end = null
 		this.selected.start = null
-		this.dataJSON.forEach(datapoint => {
-			const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
-			this.resetFilter(datapoint.id, ...setIds)
+		this.dataJSON.sources.forEach(source => {
+			source.data.forEach(datapoint => {
+				const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
+				this.resetFilter(datapoint.id, ...setIds)
+			})
 		})
 		this.pushUpdate('Done filtering.')
 	}
@@ -193,9 +205,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 			const firstDate = this.selected.start
 			const lastDate = this.selected.end
 
-			this.dataJSON.forEach(datapoint => {
-				const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
-				this.filterChartByDate(datapoint.id, firstDate, lastDate, ...setIds)
+			this.dataJSON.sources.forEach(source => {
+				source.data.forEach(datapoint => {
+					const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
+					this.filterChartByDate(datapoint.id, firstDate, lastDate, ...setIds)
+				})
 			})
 			this.pushUpdate('Done filtering.')
 		}
@@ -319,9 +333,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	addMarkers(sensors: Array<any>, value: string, date: string, valueData: any) {
+	addMarkers(sensors: Array<any>, value: string, date: string, valueData: any, dataFormat: any) {
 		sensors.forEach(measure => {
-			const dateFormat = moment(date + ' ' + measure.time, `${this.dataJSON.sourceDataFormat.date} ${this.dataJSON.sourceDataFormat.time}`).format(this.dataJSON.prettyDateTimeFormat)
+			const dateFormat = moment(date + ' ' + measure.time, `${dataFormat.date} ${dataFormat.time}`).format(this.dataJSON.prettyDateTimeFormat)
 			this.dataPoints[value].push({
 				y: measure[value] ?? 0,
 				label: dateFormat,
@@ -332,10 +346,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 		})
 	}
 
-	addFormulaMarkers(sensors: Array<any>, value: string, date: string, formula: string, valueData: any, variables: number[][], baseSet: number) {
+	addFormulaMarkers(sensors: Array<any>, value: string, date: string, formula: string, valueData: any, variables: number[][], baseSet: number, dataFormat: any) {
 		for (let i = 0; i < sensors.length; i++)
 			sensors[i][value] = this.evalFormula(formula, sensors[i][value], variables, baseSet)
-		this.addMarkers(sensors, value, date, valueData)
+		this.addMarkers(sensors, value, date, valueData, dataFormat)
 	}
 
 	registerDataPointSet(...labels: string[]) {
