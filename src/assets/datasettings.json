@@ -1,4 +1,5 @@
 {
+    "sourceLabels": true,
     "historyEnabled": true,
     "prettyDateTimeFormat": "DD MMM YYYY HH:mm",
     "sources": [

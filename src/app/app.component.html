@@ -12,7 +12,7 @@
             </span>
         </p>
         <div *ngFor="let source of dataJSON.sources">
-            <div class="text-center">
+            <div class="text-center" *ngIf="dataJSON.sourceLabels === true">
                 <h1><b>{{source.label}}</b></h1>
                 <hr>
             </div>
