@@ -17,16 +17,21 @@
                     "label": "Celcius (°C)",
                     "labelFormat": "0.00 °C",
                     "location": "data.sensors",
+                    "chartType": "scatter",
                     "sets": [
                         {
                             "id": "temperatureLow",
                             "label": "First measure",
-                            "color": "#AC5838"
+                            "color": "#AC5838",
+                            "markerType": "circle",
+                            "markerSize": 2
                         },
                         {
                             "id": "temperatureHigh",
                             "label": "Second measure",
-                            "color": "#CCAC32"
+                            "color": "#CCAC32",
+                            "markerType": "square",
+                            "markerSize": 1
                         }
                     ]
                 },
@@ -38,6 +43,7 @@
                     "formula": "((set0_next - set0_curr) / (set1_next - set1_curr)) * (input - set1_curr) + set0_curr",
                     "location": "data.particles",
                     "baseSet": 0,
+                    "chartType": "stackedColumn",
                     "sets": [
                         {
                             "id": "pm10",
@@ -101,6 +107,7 @@
                     "label": "Hectopascal (hPa)",
                     "labelFormat": "0 hPa",
                     "location": "data.sensors",
+                    "chartType": "column",
                     "sets": [
                         {
                             "id": "pressure",
@@ -115,6 +122,7 @@
                     "label": "Lux",
                     "labelFormat": "0 lx",
                     "location": "data.sensors",
+                    "chartType": "line",
                     "sets": [
                         {
                             "id": "lightLevel",

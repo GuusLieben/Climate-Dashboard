@@ -14,6 +14,10 @@ body {
     padding: 0;
 }
 
+hr {
+    border: 1px solid var(--text);
+}
+
 .wrapper  {
     padding: 50px 120px 10px 70px;
 }

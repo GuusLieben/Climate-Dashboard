@@ -13,14 +13,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 	public dataJSON = require('../assets/datasettings.json')
 
-	// HTML rendered charts
-	public chartIds = []
-
 	// HttpClient for API calls, NgZone for out-of-zone activities
-	constructor(private http: HttpClient, private zone: NgZone) {
-		this.dataJSON.sources.forEach((source: any) =>
-			source.data.forEach((dataSet: any) => this.chartIds.push(source.id + dataSet.id)))
-	}
+	constructor(private http: HttpClient, private zone: NgZone) { }
 
 	// Custom calculation variables
 	private math = require('mathjs')
@@ -111,6 +105,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		// Run outside Angular's zone to prevent hanging the UI
 		this.zone.runOutsideAngular(() => {
 			this.dataJSON.sources.forEach(source => {
+				const sourceIndex = this.dataJSON.sources.indexOf(source)
 				this.pushUpdate(`Connecting to ${source.label}`)
 
 				this.http.get(source.url).subscribe(async (apiResponse: any) => {
@@ -128,12 +123,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 						this.pushUpdate('Adding markers for ' + Object.keys(apiResponse.response).length + ' registrations')
 						Object.keys(apiResponse.response).forEach(date => {
-							dataRegistration.sets.forEach((dataSet: { id: string, label: string, color: string, formula?: string, variables?: number[][], baseSet?: number }) => {
+							dataRegistration.sets.forEach((dataSet: { id: string, label: string, color: string, formula?: string, variables?: number[][], baseSet?: number, markerType?: string }) => {
 								if (apiResponse.response[date][dataRegistration.location.substring(5)]) {
 									if (dataRegistration.formula)
-										this.addFormulaMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, dataRegistration.formula, valueData[dataSet.id], dataSet.variables ?? [], dataSet.baseSet ?? 0, source.sourceDataFormat)
+										this.addFormulaMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, dataRegistration.formula, valueData[dataSet.id], dataSet.variables ?? [], dataSet.baseSet ?? 0, source.sourceDataFormat, dataSet.markerType)
 									else
-										this.addMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, valueData[dataSet.id], source.sourceDataFormat)
+										this.addMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, valueData[dataSet.id], source.sourceDataFormat, dataSet.markerType)
 								}
 							})
 						})
@@ -147,11 +142,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 						this.sortAllDataPointSets(setIds)
 
 						this.pushUpdate(`Generating chart '${dataRegistration.id}' with title '${dataRegistration.title}'`)
-						const chartDataPoints = Array.from(dataRegistration.sets, (dataSet: { id: string, label: string, color: string, type?: number }) => {
+						const chartDataPoints = Array.from(dataRegistration.sets, (dataSet: { id: string, label: string, color: string, type?: number, markerSize?: number }) => {
 							return {
 								label: dataSet.label,
 								data: this.dataPoints[dataSet.id],
-								color: dataSet.color
+								color: dataSet.color,
+								markerSize: dataSet.markerSize
 							}
 						})
 
@@ -160,22 +156,23 @@ export class AppComponent implements OnInit, AfterViewInit {
 							chartDataPoints,
 							dataRegistration.title,
 							dataRegistration.label,
+							dataRegistration.chartType ?? 'splineArea',
 							dataRegistration.labelFormat)
 
 						this.pushUpdate(`Rendering all charts for ${dataRegistration.id}`)
 						this.renderChart([], 0, source.id + dataRegistration.id)
 
+						if (sourceIndex === this.dataJSON.sources.length - 1) {
+							this.rendering = false
+							this.showHistory = false
+
+							this.pushUpdate(`Done.`)
+						}
 					})
-
-					this.rendering = false
-					this.showHistory = false
-
-					this.pushUpdate(`Done.`)
 				}, error => {
 					console.error('An unknown error occurred : ', JSON.stringify(error))
 				})
 			})
-
 		})
 	}
 
@@ -192,7 +189,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.dataJSON.sources.forEach(source => {
 			source.data.forEach(datapoint => {
 				const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
-				this.resetFilter(datapoint.id, ...setIds)
+				this.resetFilter(source.id + datapoint.id, ...setIds)
 			})
 		})
 		this.pushUpdate('Done filtering.')
@@ -208,7 +205,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			this.dataJSON.sources.forEach(source => {
 				source.data.forEach(datapoint => {
 					const setIds: Array<string> = Array.from(datapoint.sets, (set: any) => set.id)
-					this.filterChartByDate(datapoint.id, firstDate, lastDate, ...setIds)
+					this.filterChartByDate(source.id + datapoint.id, firstDate, lastDate, ...setIds)
 				})
 			})
 			this.pushUpdate('Done filtering.')
@@ -262,12 +259,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 		return averageByDay
 	}
 
-	generateChart(id: string, dataSets: Array<any>, title: string, labelY: string, formatY?: string): CanvasJS.Chart {
+	generateChart(id: string, dataSets: Array<any>, title: string, labelY: string, chartType: string, formatY?: string): CanvasJS.Chart {
 		const data = []
 		dataSets.forEach(dataSet => {
 			data.push({
-				markerSize: 8,
-				type: 'splineArea',
+				markerSize: dataSet.markerSize ?? 8,
+				type: chartType,
 				name: dataSet.label,
 				showInLegend: true,
 				dataPoints: dataSet.data,
@@ -333,23 +330,23 @@ export class AppComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	addMarkers(sensors: Array<any>, value: string, date: string, valueData: any, dataFormat: any) {
-		sensors.forEach(measure => {
+	addMarkers(dataSet: Array<any>, value: string, date: string, valueData: any, dataFormat: any, markerType?: string) {
+		dataSet.forEach(measure => {
 			const dateFormat = moment(date + ' ' + measure.time, `${dataFormat.date} ${dataFormat.time}`).format(this.dataJSON.prettyDateTimeFormat)
 			this.dataPoints[value].push({
 				y: measure[value] ?? 0,
 				label: dateFormat,
-				markerType: 'none'
+				markerType: markerType ?? 'none'
 			})
 			if (measure[value] > valueData.max || !valueData.max) valueData.max = measure[value]
 			if (measure[value] < valueData.min || !valueData.min) valueData.min = measure[value]
 		})
 	}
 
-	addFormulaMarkers(sensors: Array<any>, value: string, date: string, formula: string, valueData: any, variables: number[][], baseSet: number, dataFormat: any) {
+	addFormulaMarkers(sensors: Array<any>, value: string, date: string, formula: string, valueData: any, variables: number[][], baseSet: number, dataFormat: any, markerType?: string) {
 		for (let i = 0; i < sensors.length; i++)
 			sensors[i][value] = this.evalFormula(formula, sensors[i][value], variables, baseSet)
-		this.addMarkers(sensors, value, date, valueData, dataFormat)
+		this.addMarkers(sensors, value, date, valueData, dataFormat, markerType)
 	}
 
 	registerDataPointSet(...labels: string[]) {

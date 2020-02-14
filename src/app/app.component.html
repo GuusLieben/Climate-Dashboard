@@ -11,9 +11,15 @@
                 <button *ngIf="historyEnabled === true" class="reset" (click)="showHistory = true">History</button>
             </span>
         </p>
-        <div class="row">
-            <div class="col-6 col-lg-6 col-sm-12" *ngFor="let id of chartIds">
-                <div class="chart" id="{{id}}Chart"></div>
+        <div *ngFor="let source of dataJSON.sources">
+            <div class="text-center">
+                <h1><b>{{source.label}}</b></h1>
+                <hr>
+            </div>
+            <div class="row">
+                <div class="col-6 col-lg-6 col-sm-12" *ngFor="let dataSet of source.data">
+                    <div class="chart" id="{{source.id}}{{dataSet.id}}Chart"></div>
+                </div>
             </div>
         </div>
 
