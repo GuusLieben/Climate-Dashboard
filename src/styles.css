@@ -15,6 +15,13 @@ hr {
     padding: 50px 120px 10px 70px;
 }
 
+.card {
+    background: var(--secondary-background);
+    height: 100px;
+    max-height: 100px;
+    margin-bottom: 25px;
+}
+
 .loader {
     color: var(--text);
     font-family: 'Courier New', Courier, monospace;
@@ -31,16 +38,6 @@ hr {
     margin-bottom: 50px;
     padding-top: 10px;
     width: 100%;
-}
-
-.card {
-    border-radius: 0px;
-    border: 0;
-    background-color: var(--background);
-}
-
-.card-body .row {
-    padding: 25px;
 }
 
 .btn-light {
@@ -213,7 +210,7 @@ ngb-datepicker {
 .banner {
     height: 200px;
     max-height: 200px;
-    background: linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) ), url('https://www.mamboweb.nl/wp-content/uploads/2016/03/sidney-header.jpg');
+    background: linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) ), var(--banner-url);
     background-size: cover;
     background-position: center;
     margin-bottom: 35px;

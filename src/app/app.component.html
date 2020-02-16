@@ -1,6 +1,16 @@
 <div class="banner"></div>
 <div class="wrapper">
     <div [ngClass]="isRendering() ? 'hidden' : 'charts'">
+        <div class="row">
+            <div *ngFor="let set of setIds" class="col-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><small>{{set}}</small></h5>
+                        <p class="card-text">0.00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
         <p>
             <span>
                 <b style="margin-right: 25px">Range : {{formatStructs()}}</b>

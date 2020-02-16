@@ -1,3 +1,5 @@
+'use strict'
+
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql');
@@ -12,7 +14,7 @@ const app = express().use(cors());
 
 app.get('/api', (req, res) => {
   connection.query(settings.gatherAllQuery, (error, results) => {
-    if (error) res.status(500).json({status: error});
+    if (error) res.status(500).json({ status: error });
     else {
       let temperatures = [];
       let particles = [];
@@ -27,7 +29,7 @@ app.get('/api', (req, res) => {
         // Particles has combined DateTime stamps, therefore we do not need to parse it with MomentJS
         const date = element.Recorded.split(' ')[0];
         const time = element.Recorded.split(' ')[1];
-        if (!response[date]) response[date] = {particles: []}
+        if (!response[date]) response[date] = { particles: [] }
 
         response[date].particles.push({
           time: time,
@@ -38,7 +40,7 @@ app.get('/api', (req, res) => {
 
       temperatures.forEach(element => {
         const date = moment(element.Recorded, 'YYYY-MM-DD').format('DD.MM.YYYY');
-        if (!response[date]) response[date] = {sensors: []}
+        if (!response[date]) response[date] = { sensors: [] }
         if (!response[date].sensors) response[date].sensors = [];
 
         response[date].sensors.push({
@@ -51,11 +53,16 @@ app.get('/api', (req, res) => {
         });
       });
 
-      res.status(200).json({response});
+      res.status(200).json({ response });
     }
   });
 })
 
 app.use(express.static('dist/climate'))
 
-app.listen(port, () => console.log('Started application'));
+require('greenlock-express').init({
+  packageRoot: __dirname,
+  configDir: './greenlock.d',
+  maintainerEmail: 'guus@xendox.com',
+  cluster: false
+}).serve(app)

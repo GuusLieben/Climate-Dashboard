@@ -56,6 +56,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 		else themeSet = this.cssThemeValues['light1']
 
 		Object.keys(themeSet).forEach(reg => document.documentElement.style.setProperty(`--${reg}`, themeSet[reg]))
+
+		document.documentElement.style.setProperty('--banner-url', `url(${this.settings.bannerUrl})`)
+
+		this.settings.sources.forEach(source => source.data.forEach(data => data.sets.forEach(set => this.setIds.push(set.id))))
 	}
 
 	// Custom calculation variables
@@ -68,6 +72,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	private dataPoints: Array<Array<any>> = []
 	public rendering: boolean = true
 	private charts: Array<CanvasJS.Chart> = []
+	public setIds: string[] = []
 
 	// Progress/history store
 	public progress: Array<any> = []
