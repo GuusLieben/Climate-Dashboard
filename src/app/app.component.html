@@ -1,12 +1,12 @@
 <div class="banner"></div>
 <div class="wrapper">
     <div [ngClass]="isRendering() ? 'hidden' : 'charts'">
-        <div class="row">
+        <div class="row" *ngIf="settings.latestMeasures === true">
             <div *ngFor="let set of setIds" class="col-3">
-                <div class="card">
+                <div class="card" [ngStyle]="{'background-color': set.color}">
                     <div class="card-body">
-                        <h5 class="card-title"><small>{{set}}</small></h5>
-                        <p class="card-text">0.00</p>
+                        <h5 class="card-title"><small>{{set.name}}</small></h5>
+                        <p class="card-text"><small>{{latestValue(set).label}} : </small>{{latestValue(set).y}}</p>
                     </div>
                 </div>
             </div>

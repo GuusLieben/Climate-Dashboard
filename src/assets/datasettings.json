@@ -10,6 +10,7 @@
     "sourceLabels": true,
     "historyEnabled": true,
     "prettyDateTimeFormat": "DD MMM YYYY HH:mm",
+    "latestMeasures": true,
     "sources": [
         {
             "id": "primary_",
@@ -26,7 +27,7 @@
                     "label": "Celcius (°C)",
                     "labelFormat": "0.00 °C",
                     "location": "data.sensors",
-                    "chartType": "scatter",
+                    "chartType": "spline",
                     "sets": [
                         {
                             "id": "temperatureLow",
@@ -52,11 +53,11 @@
                     "formula": "((set0_next - set0_curr) / (set1_next - set1_curr)) * (input - set1_curr) + set0_curr",
                     "location": "data.particles",
                     "baseSet": 0,
-                    "chartType": "stackedColumn",
+                    "chartType": "spline",
                     "sets": [
                         {
                             "id": "pm10",
-                            "label": "1.0 micrometer",
+                            "label": "10 micrometer",
                             "color": "#B438A4",
                             "variables": [
                                 [
@@ -114,9 +115,9 @@
                     "id": "pressure",
                     "title": "Pressure",
                     "label": "Hectopascal (hPa)",
-                    "labelFormat": "0 hPa",
+                    "labelFormat": "0. hPa",
                     "location": "data.sensors",
-                    "chartType": "column",
+                    "chartType": "spline",
                     "sets": [
                         {
                             "id": "pressure",
@@ -129,9 +130,9 @@
                     "id": "light",
                     "title": "Light Level",
                     "label": "Lux",
-                    "labelFormat": "0 lx",
+                    "labelFormat": "0. lx",
                     "location": "data.sensors",
-                    "chartType": "line",
+                    "chartType": "spline",
                     "sets": [
                         {
                             "id": "lightLevel",

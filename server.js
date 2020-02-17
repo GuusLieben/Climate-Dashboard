@@ -60,9 +60,4 @@ app.get('/api', (req, res) => {
 
 app.use(express.static('dist/climate'))
 
-require('greenlock-express').init({
-  packageRoot: __dirname,
-  configDir: './greenlock.d',
-  maintainerEmail: 'guus@xendox.com',
-  cluster: false
-}).serve(app)
+app.listen(port, () => console.log(`Started on :${port}`))

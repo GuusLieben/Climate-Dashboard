@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, ApplicationRef, NgZone, HostBinding }
 import * as CanvasJS from '../assets/canvasjs.min'
 import { HttpClient } from '@angular/common/http'
 import * as moment from 'moment'
-import { DomSanitizer } from '@angular/platform-browser'
+import * as format from 'format-number-with-string'
 
 @Component({
 	selector: 'app-root',
@@ -59,7 +59,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 		document.documentElement.style.setProperty('--banner-url', `url(${this.settings.bannerUrl})`)
 
-		this.settings.sources.forEach(source => source.data.forEach(data => data.sets.forEach(set => this.setIds.push(set.id))))
+		this.settings.sources.forEach(source => source.data.forEach(data => data.sets.forEach(set => this.setIds.push({
+			id: set.id,
+			name: set.label,
+			color: set.color,
+			format: data.labelFormat
+		}))))
 	}
 
 	// Custom calculation variables
@@ -69,10 +74,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 	public year = moment().year()
 
 	// Chart data
-	private dataPoints: Array<Array<any>> = []
+	public dataPoints: Array<Array<any>> = []
 	public rendering: boolean = true
 	private charts: Array<CanvasJS.Chart> = []
-	public setIds: string[] = []
+	public setIds: any[] = []
 
 	// Progress/history store
 	public progress: Array<any> = []
@@ -91,6 +96,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 		const lastStruct = this.selected.end ? moment(this.selected.end, 'YYYY-MM-DDTHH:mm:ss.mmmZ').valueOf() : null
 		if (!firstStruct || !lastStruct) return false
 		return firstStruct < lastStruct
+	}
+
+	private latestValues: any[] = []
+
+	latestValue(set: any) {
+		if (this.latestValues[set.id]) return this.latestValues[set.id]
+		else if (this.dataPoints[set.id] && this.dataPoints[set.id].length > 0) {
+			const item = this.dataPoints[set.id][this.dataPoints[set.id].length-1]
+			item.y = format(item.y, set.format)
+			this.latestValues[set.id] = item
+			return item
+		}
+		return {label: 'No measurement', y: '', color: 'gray'}
 	}
 
 	// To prevent duplicate logic in the plural function for formatting
