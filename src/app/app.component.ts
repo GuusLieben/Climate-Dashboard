@@ -103,12 +103,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 	latestValue(set: any) {
 		if (this.latestValues[set.id]) return this.latestValues[set.id]
 		else if (this.dataPoints[set.id] && this.dataPoints[set.id].length > 0) {
-			const item = this.dataPoints[set.id][this.dataPoints[set.id].length-1]
+			const item = this.dataPoints[set.id][this.dataPoints[set.id].length - 1]
 			item.y = format(item.y, set.format)
 			this.latestValues[set.id] = item
 			return item
 		}
-		return {label: 'No measurement', y: '', color: 'gray'}
+		return { label: 'No measurement', y: '', color: 'gray' }
 	}
 
 	// To prevent duplicate logic in the plural function for formatting
@@ -175,65 +175,71 @@ export class AppComponent implements OnInit, AfterViewInit {
 
 				this.http.get(source.url).subscribe(async (apiResponse: any) => {
 					this.pushUpdate('Received data from API')
-					this.pushUpdate('Registering data sets')
+					if (apiResponse.status) {
+						this.pushUpdate('Received error from API')
+						this.pushUpdate(JSON.stringify(apiResponse.status))
+					} else {
 
-					source.data.filter((datapoint: any) => datapoint.location).forEach((dataRegistration: any) => {
-						const valueData: Array<any> = []
-						const setIds: Array<string> = Array.from(dataRegistration.sets, (set: any) => set.id)
-						dataRegistration.sets.forEach((dataSet: any) => {
-							this.pushUpdate(`=> ${dataRegistration.id}.${dataSet.id}`)
-							this.registerDataPointSet(dataSet.id)
-							valueData[dataSet.id] = { min: null, max: null }
-						})
+						this.pushUpdate('Registering data sets')
 
-						this.pushUpdate('Adding markers for ' + Object.keys(apiResponse.response).length + ' registrations')
-						Object.keys(apiResponse.response).forEach(date => {
-							dataRegistration.sets.forEach((dataSet: { id: string, label: string, color: string, formula?: string, variables?: number[][], baseSet?: number, markerType?: string }) => {
-								if (apiResponse.response[date][dataRegistration.location.substring(5)]) {
-									if (dataRegistration.formula)
-										this.addFormulaMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, dataRegistration.formula, valueData[dataSet.id], dataSet.variables ?? [], dataSet.baseSet ?? 0, source.sourceDataFormat, dataSet.markerType)
-									else
-										this.addMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, valueData[dataSet.id], source.sourceDataFormat, dataSet.markerType)
+						source.data.filter((datapoint: any) => datapoint.location).forEach((dataRegistration: any) => {
+							const valueData: Array<any> = []
+							const setIds: Array<string> = Array.from(dataRegistration.sets, (set: any) => set.id)
+							dataRegistration.sets.forEach((dataSet: any) => {
+								this.pushUpdate(`=> ${dataRegistration.id}.${dataSet.id}`)
+								this.registerDataPointSet(dataSet.id)
+								valueData[dataSet.id] = { min: null, max: null }
+							})
+
+							this.pushUpdate('Adding markers for ' + Object.keys(apiResponse.response).length + ' registrations')
+							Object.keys(apiResponse.response).forEach(date => {
+								dataRegistration.sets.forEach((dataSet: { id: string, label: string, color: string, formula?: string, variables?: number[][], baseSet?: number, markerType?: string }) => {
+									if (apiResponse.response[date][dataRegistration.location.substring(5)]) {
+										if (dataRegistration.formula)
+											this.addFormulaMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, dataRegistration.formula, valueData[dataSet.id], dataSet.variables ?? [], dataSet.baseSet ?? 0, source.sourceDataFormat, dataSet.markerType)
+										else
+											this.addMarkers(apiResponse.response[date][dataRegistration.location.substring(5)], dataSet.id, date, valueData[dataSet.id], source.sourceDataFormat, dataSet.markerType)
+									}
+								})
+							})
+
+							// Iterate datapoint sets
+							this.pushUpdate(`Calculating minimum and maximum values for ${dataRegistration.id}`)
+							this.minMaxForSet(setIds, valueData)
+
+							this.pushUpdate(`Sorting all data sets for ${dataRegistration.id}`)
+							// Sorts all given data sets (here, all) by date
+							this.sortAllDataPointSets(setIds)
+
+							this.pushUpdate(`Generating chart '${dataRegistration.id}' with title '${dataRegistration.title}'`)
+							const chartDataPoints = Array.from(dataRegistration.sets, (dataSet: { id: string, label: string, color: string, type?: number, markerSize?: number }) => {
+								return {
+									label: dataSet.label,
+									data: this.dataPoints[dataSet.id],
+									color: dataSet.color,
+									markerSize: dataSet.markerSize
 								}
 							})
-						})
 
-						// Iterate datapoint sets
-						this.pushUpdate(`Calculating minimum and maximum values for ${dataRegistration.id}`)
-						this.minMaxForSet(setIds, valueData)
+							this.charts[source.id + dataRegistration.id] = this.generateChart(
+								`${source.id}${dataRegistration.id}Chart`,
+								chartDataPoints,
+								dataRegistration.title,
+								dataRegistration.label,
+								dataRegistration.chartType ?? 'splineArea',
+								dataRegistration.labelFormat)
 
-						this.pushUpdate(`Sorting all data sets for ${dataRegistration.id}`)
-						// Sorts all given data sets (here, all) by date
-						this.sortAllDataPointSets(setIds)
+							this.pushUpdate(`Rendering all charts for ${dataRegistration.id}`)
+							this.renderChart([], 0, source.id + dataRegistration.id)
 
-						this.pushUpdate(`Generating chart '${dataRegistration.id}' with title '${dataRegistration.title}'`)
-						const chartDataPoints = Array.from(dataRegistration.sets, (dataSet: { id: string, label: string, color: string, type?: number, markerSize?: number }) => {
-							return {
-								label: dataSet.label,
-								data: this.dataPoints[dataSet.id],
-								color: dataSet.color,
-								markerSize: dataSet.markerSize
+							if (sourceIndex === this.settings.sources.length - 1) {
+								this.rendering = false
+								this.showHistory = false
+
+								this.pushUpdate(`Done.`)
 							}
 						})
-
-						this.charts[source.id + dataRegistration.id] = this.generateChart(
-							`${source.id}${dataRegistration.id}Chart`,
-							chartDataPoints,
-							dataRegistration.title,
-							dataRegistration.label,
-							dataRegistration.chartType ?? 'splineArea',
-							dataRegistration.labelFormat)
-
-						this.pushUpdate(`Rendering all charts for ${dataRegistration.id}`)
-						this.renderChart([], 0, source.id + dataRegistration.id)
-
-						if (sourceIndex === this.settings.sources.length - 1) {
-							this.rendering = false
-							this.showHistory = false
-
-							this.pushUpdate(`Done.`)
-						}
-					})
+					}
 				}, error => {
 					console.error('An unknown error occurred : ', JSON.stringify(error))
 				})
