@@ -242,6 +242,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 					}
 				}, error => {
 					console.error('An unknown error occurred : ', JSON.stringify(error))
+					this.pushUpdate('Could not connect to API, please try again later')
 				})
 			})
 		})
