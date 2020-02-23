@@ -6,12 +6,11 @@ const mysql = require('mysql');
 const moment = require('moment');
 const settings = require('./settings');
 
-const connection = mysql.createConnection(settings.connectionSettings);
-
 const port = process.env.PORT || 8080;
 const app = express().use(cors());
 
 app.get('/api', (req, res) => {
+  const connection = mysql.createConnection(settings.connectionSettings);
   connection.connect((err) => {
     if (err) {
       res.status(500).json({status: err})
